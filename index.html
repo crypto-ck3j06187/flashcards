@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="單字翻翻卡">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font:14px system-ui,sans-serif}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<title>單字翻翻卡</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* Layout: a single phone-width column. Home lists the word sets; Study is one big card with the action bar pinned under it.
+   Identity: ink-navy on cool paper, with a highlighter-yellow swipe behind the word being studied. */
+:root{
+  --paper:#F2F4F8;
+  --card:#FFFFFF;
+  --ink:#14203A;
+  --ink-2:#4B587A;
+  --line:#D9DEEA;
+  --hl:#FFD83D;
+  --hl-soft:#FFE98F;
+  --go:#17794F;
+  --go-ink:#FFFFFF;
+  --go-fg:#17794F;
+  --go-soft:#DDF2E7;
+  --btn:#14203A;
+  --btn-ink:#F2F4F8;
+  --danger:#B4321F;
+  --shadow:0 1px 0 rgba(20,32,58,.06),0 14px 34px -18px rgba(20,32,58,.35);
+  --font-display:"Bricolage Grotesque","Noto Sans TC","PingFang TC",sans-serif;
+  --font-body:"Noto Sans TC",-apple-system,"PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0E1320;--card:#171E30;--ink:#EAEFFA;--ink-2:#A5B0CC;--line:#2B3552;
+    --hl:rgba(255,216,61,.38);--hl-soft:rgba(255,216,61,.26);
+    --go:#34B67C;--go-ink:#04170E;--go-fg:#6FDDA8;--go-soft:rgba(52,182,124,.2);
+    --btn:#EAEFFA;--btn-ink:#0E1320;--danger:#FF8F7E;
+    --shadow:0 1px 0 rgba(0,0,0,.4),0 14px 34px -18px rgba(0,0,0,.7);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0E1320;--card:#171E30;--ink:#EAEFFA;--ink-2:#A5B0CC;--line:#2B3552;
+  --hl:rgba(255,216,61,.38);--hl-soft:rgba(255,216,61,.26);
+  --go:#34B67C;--go-ink:#04170E;--go-fg:#6FDDA8;--go-soft:rgba(52,182,124,.2);
+  --btn:#EAEFFA;--btn-ink:#0E1320;--danger:#FF8F7E;
+  --shadow:0 1px 0 rgba(0,0,0,.4),0 14px 34px -18px rgba(0,0,0,.7);
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--font-body);font-size:16px;line-height:1.5;
+  padding-block:8px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  -webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent;
+}
+button,input,label{font:inherit;color:inherit;touch-action:manipulation}
+:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.wrap{max-width:560px;margin:0 auto;height:100%;display:flex;flex-direction:column;min-width:0}
+.screen{height:100%;min-height:0;display:flex;flex-direction:column}
+.scroll{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);opacity:0}
+
+.bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-block:4px 10px;flex:none}
+.bar-btns{display:flex;gap:2px}
+.brand{font:700 1.65rem/1.15 var(--font-display);margin:0;letter-spacing:-.01em}
+.hl{background:linear-gradient(transparent 56%,var(--hl) 56% 94%,transparent 94%);padding:0 .1em;border-radius:2px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.icon-btn{width:44px;height:44px;border:0;background:transparent;color:var(--ink);border-radius:12px;display:grid;place-items:center;cursor:pointer;flex:none}
+.icon-btn:hover{background:var(--line)}
+.icon-btn.ring{border:1px solid var(--line);background:var(--card)}
+svg{display:block}
+.icon-btn svg,.speak svg,.btn svg,.chip svg{stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.icon-btn svg{width:22px;height:22px}
+
+.note{display:grid;gap:10px;padding:14px 16px;border-radius:14px;background:var(--hl-soft);margin-bottom:14px}
+.note p{margin:0;font-size:.95rem}
+.note .btn{flex:none;justify-self:start;min-height:44px;padding:0 18px}
+.cats{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.cat{display:flex;align-items:stretch;background:var(--card);border:1px solid var(--line);border-radius:16px}
+.cat-main{flex:1;min-width:0;text-align:left;border:0;background:none;padding:14px 4px 14px 16px;cursor:pointer;border-radius:16px 0 0 16px;display:grid;gap:7px}
+.cat-main:active{background:var(--paper)}
+.cat-name{font-weight:700;font-size:1.1rem;line-height:1.3;overflow-wrap:anywhere}
+.cat.is-done .cat-name::after{content:" ✓";color:var(--go-fg)}
+.cat-meta{font-size:.85rem;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.meter{height:6px;border-radius:99px;background:var(--line);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--go);border-radius:99px}
+.cat-more{align-self:center;margin-right:4px}
+.foot{color:var(--ink-2);font-size:.82rem;padding-block:16px 8px;margin:0}
+
+.study-bar{padding-block:0 6px}
+.study-title{flex:1;min-width:0;text-align:center;display:grid;line-height:1.3}
+.study-title b{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.study-title span{font-size:.82rem;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.progress{height:4px;background:var(--line);border-radius:99px;overflow:hidden;flex:none}
+.progress div{height:100%;background:var(--ink);width:0;transition:width .25s}
+.card-wrap{display:flex;padding-block:12px}
+.card{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:18px 18px 24px}
+.card-top{display:flex;flex-wrap:wrap;gap:6px;min-height:28px}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:.78rem;line-height:1;padding:6px 10px;border-radius:99px;border:1px solid var(--line);color:var(--ink-2)}
+.chip svg{width:13px;height:13px;stroke-width:2.6}
+.chip-go{background:var(--go-soft);color:var(--go-fg);border-color:transparent}
+.card-body{margin-block:auto;width:100%;display:flex;flex-direction:column;align-items:center;text-align:center;gap:16px}
+.word{font:700 clamp(2.3rem,12vw,3.6rem)/1.15 var(--font-display);letter-spacing:-.015em;overflow-wrap:anywhere;max-width:100%}
+.zh-big{font-weight:700;font-size:clamp(1.9rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+.zh-mid{font-weight:700;font-size:clamp(1.6rem,7.5vw,2.1rem);line-height:1.3;overflow-wrap:anywhere}
+.speak{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:99px;padding:0 16px 0 12px;font-size:.9rem;cursor:pointer;min-height:44px}
+.speak svg{width:20px;height:20px}
+.speak:active,.icon-btn.ring:active{background:var(--paper)}
+.hint{color:var(--ink-2);font-size:.9rem;margin:0}
+.answer{width:100%;display:flex;flex-direction:column;align-items:center;gap:14px;border-top:1.5px dashed var(--line);padding-top:18px}
+.example{width:100%;text-align:left;background:var(--paper);border-radius:14px;padding:12px 8px 12px 16px;display:grid;gap:6px}
+.ex-label{font-size:.72rem;letter-spacing:.14em;color:var(--ink-2);font-weight:700}
+.ex-row{display:flex;gap:6px;align-items:flex-start}
+.ex-text{flex:1;min-width:0;display:grid;gap:6px;padding-top:2px}
+.ex-en{margin:0;font-size:1.08rem;line-height:1.55;overflow-wrap:anywhere}
+.ex-zh{margin:0;color:var(--ink-2);font-size:.95rem;overflow-wrap:anywhere}
+mark{background:var(--hl-soft);color:inherit;border-radius:3px;padding:0 .12em}
+.done .word{margin-bottom:2px}
+.done-text{margin:0;color:var(--ink-2)}
+.done-btns{display:grid;gap:10px;width:100%;margin-top:6px}
+
+.actions{flex:none;display:flex;gap:10px;padding-block:10px 4px}
+.btn{flex:1;min-height:54px;border-radius:16px;border:1.5px solid var(--btn);background:transparent;color:var(--ink);font-weight:700;font-size:.97rem;line-height:1.25;cursor:pointer;padding:6px 12px;display:inline-flex;align-items:center;justify-content:center;text-align:center;gap:8px}
+.btn svg{width:22px;height:22px}
+.btn-primary{background:var(--btn);color:var(--btn-ink)}
+.btn-go{background:var(--go);border-color:var(--go);color:var(--go-ink)}
+.btn-danger{border-color:var(--danger);color:var(--danger)}
+.btn-prev{flex:none;width:54px;padding:0}
+.btn:disabled{opacity:.35;cursor:default}
+.file-btn{display:flex}
+
+.sheet-back{position:fixed;inset:0;background:rgba(10,16,32,.5);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+.sheet{width:100%;max-width:560px;max-height:90%;overflow-y:auto;background:var(--card);color:var(--ink);border-radius:22px 22px 0 0;outline:none;
+  padding-top:20px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px));padding-bottom:calc(22px + env(safe-area-inset-bottom,0px));
+  display:grid;gap:14px;box-shadow:0 -12px 40px rgba(0,0,0,.3)}
+.sheet>*{min-width:0}
+.sheet .btn{flex:none}
+.sheet-title{font:700 1.3rem/1.3 var(--font-display);margin:0}
+.muted{color:var(--ink-2);font-size:.92rem;margin:0}
+.err{margin:0;color:var(--danger);font-size:.92rem;font-weight:500}
+.group{display:grid;gap:8px}
+.group-label{font-size:.78rem;letter-spacing:.1em;color:var(--ink-2);font-weight:700}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--paper);border-radius:12px;padding:4px;gap:4px}
+.seg button{border:0;background:transparent;color:var(--ink-2);font-weight:500;font-size:.95rem;min-height:42px;border-radius:9px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);font-weight:700;box-shadow:0 1px 3px rgba(20,32,58,.25)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px}
+.switch{appearance:none;-webkit-appearance:none;width:50px;height:30px;border-radius:99px;background:var(--line);position:relative;cursor:pointer;flex:none;margin:0;transition:background .15s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .15s;box-shadow:0 1px 2px rgba(0,0,0,.35)}
+.switch:checked{background:var(--go)}
+.switch:checked::after{transform:translateX(20px)}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:.85rem}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+th{background:var(--paper);font-weight:700}
+.sum{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.sum li{display:flex;justify-content:space-between;gap:12px;padding:10px 14px;background:var(--paper);border-radius:12px}
+.sum li span:last-child{font-variant-numeric:tabular-nums;color:var(--ink-2);flex:none}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));background:var(--btn);color:var(--btn-ink);padding:10px 16px;border-radius:99px;font-size:.9rem;font-weight:500;z-index:30;max-width:calc(100% - 32px);text-align:center}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+</head>
+<body>
+<div id="app" class="wrap">
+  <section id="home" class="screen">
+    <header class="bar">
+      <h1 class="brand">單字<span class="hl">翻翻卡</span></h1>
+      <div class="bar-btns">
+        <button class="icon-btn" id="btnImport" type="button" aria-label="匯入 Excel"></button>
+        <button class="icon-btn" id="btnSettings" type="button" aria-label="設定"></button>
+      </div>
+    </header>
+    <div class="scroll" id="homeScroll">
+      <div id="emptyNote" class="note" hidden>
+        <p><b>還沒有單字。</b>匯入你的 Excel 就能開始背誦。</p>
+        <button class="btn btn-primary" id="btnImport2" type="button">匯入 Excel</button>
+      </div>
+      <ul id="catList" class="cats"></ul>
+      <p class="foot" id="homeFoot"></p>
+    </div>
+  </section>
+
+  <section id="study" class="screen" hidden>
+    <header class="bar study-bar">
+      <button class="icon-btn" id="btnBack" type="button" aria-label="回到分類"></button>
+      <div class="study-title"><b id="stCat"></b><span id="stCount"></span></div>
+      <button class="icon-btn" id="btnSettings2" type="button" aria-label="設定"></button>
+    </header>
+    <div class="progress" aria-hidden="true"><div id="progFill"></div></div>
+    <div class="scroll card-wrap" id="cardWrap"><article id="card" class="card"></article></div>
+    <footer class="actions" id="actions"></footer>
+  </section>
+
+  <div id="sheetBack" class="sheet-back" hidden><div id="sheet" class="sheet" role="dialog" aria-modal="true" tabindex="-1"></div></div>
+  <div id="toast" class="toast" role="status" hidden></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(function(){
+'use strict';
+
+/* ==core:start== */
+const ALL='*all*';
+const ALIAS={
+  en:['英文','英文單字','單字','english','word','vocabulary','vocab','en'],
+  zh:['中文','中文意思','意思','翻譯','中譯','chinese','meaning','translation','zh'],
+  pos:['詞性','pos','partofspeech'],
+  ex:['例句','英文例句','例句英文','例句(英)','例句（英）','example','sentence','examplesentence'],
+  exZh:['例句中文','例句翻譯','例句中譯','中文例句','例句(中)','例句（中）','exampletranslation','sentencetranslation'],
+  cat:['分類','類別','主題','category','group','topic']
+};
+function norm(s){return String(s==null?'':s).toLowerCase().replace(/[\s_\-－—()（）\[\]【】.:：]/g,'');}
+Object.keys(ALIAS).forEach(function(k){ALIAS[k]=ALIAS[k].map(norm);});
+function fieldOf(cell){
+  const n=norm(cell); if(!n) return null;
+  const keys=Object.keys(ALIAS);
+  for(let i=0;i<keys.length;i++){ if(ALIAS[keys[i]].indexOf(n)>=0) return keys[i]; }
+  return null;
+}
+const CJK=/[㐀-鿿]/;
+function tidy(s){
+  return String(s==null?'':s).replace(/ /g,' ').replace(/\s+/g,' ').trim()
+    .replace(/\s+([.,!?;:])/g,'$1').replace(/(\d)-\s+([A-Za-z])/g,'$1-$2');
+}
+function splitHl(raw){
+  const s=String(raw==null?'':raw).replace(/ /g,' ').trim();
+  if(!s) return {text:'',hl:''};
+  const segs=s.split(/\s{2,}/);
+  let hl='';
+  if(segs.length===3){hl=segs[1];}
+  else if(segs.length===2){
+    const m=segs[1].match(/^(.*?)\s+[.,!?;:]/);
+    if(m&&m[1]) hl=m[1];
+    else if(/-\s\S+$/.test(segs[0])) hl=segs[0].match(/(\S+)$/)[1];
+    else if(segs[0].split(' ').length<=2) hl=segs[0];
+  }
+  return {text:tidy(segs.join(' ')),hl:tidy(hl)};
+}
+function parseRows(rows){
+  let map=null,start=0;
+  const lim=Math.min(rows.length,6);
+  for(let r=0;r<lim;r++){
+    const m={};
+    (rows[r]||[]).forEach(function(c,ci){const f=fieldOf(c); if(f&&m[f]===undefined) m[f]=ci;});
+    if(m.en!==undefined&&m.zh!==undefined){map=m;start=r+1;break;}
+  }
+  if(!map){
+    const colC=rows.map(function(r){return String(r&&r[2]!=null?r[2]:'').trim();}).filter(Boolean);
+    const avg=colC.length?colC.reduce(function(a,s){return a+s.length;},0)/colC.length:99;
+    map=avg<=8?{en:0,zh:1,pos:2,ex:3,exZh:4}:{en:0,zh:1,ex:2,exZh:3};
+  }
+  const get=function(r,k){return map[k]===undefined?'':String(r[map[k]]!=null?r[map[k]]:'').trim();};
+  const words=[];let skipped=0;
+  for(let i=start;i<rows.length;i++){
+    const r=rows[i]||[];
+    if(!r.some(function(c){return String(c!=null?c:'').trim()!=='';})) continue;
+    const first=String(r[0]!=null?r[0]:'').trim();
+    if(map.en===0&&/^精析/.test(first)){
+      const en2=tidy(r[1]),zh2=tidy(r[2]);
+      if(!en2||!zh2||CJK.test(en2)){skipped++;continue;}
+      const sx2=splitHl(r[3]);
+      words.push({en:en2,zh:zh2,pos:first,ex:sx2.text,exZh:'',hl:sx2.hl,cat:''});
+      continue;
+    }
+    const en=get(r,'en'),zh=get(r,'zh');
+    if(!en||!zh){skipped++;continue;}
+    const sx=splitHl(get(r,'ex'));
+    words.push({en:tidy(en),zh:tidy(zh),pos:get(r,'pos'),ex:sx.text,exZh:tidy(get(r,'exZh')),hl:sx.hl,cat:get(r,'cat')});
+  }
+  return {words:words,skipped:skipped,hadHeader:start>0};
+}
+function buildBook(sheets){
+  const cats=[],byName=new Map(),seen=new Set(),sigs=new Set(),dupSheets=[];let skipped=0;
+  sheets.forEach(function(sh){
+    const res=parseRows(sh.rows||[]);
+    const sig=res.words.map(function(w){return w.en.toLowerCase()+'>'+w.zh;}).join('|');
+    if(res.words.length&&sigs.has(sig)){dupSheets.push(String(sh.name).trim());return;}
+    if(res.words.length) sigs.add(sig);
+    skipped+=res.skipped;
+    res.words.forEach(function(w){
+      const cn=String(w.cat||sh.name).trim();
+      let c=byName.get(cn);
+      if(!c){c={id:cn,name:cn,words:[]};byName.set(cn,c);cats.push(c);}
+      const base=cn+'||'+w.en.toLowerCase();
+      let id=base,n=1;
+      while(seen.has(id)){n++;id=base+'#'+n;}
+      seen.add(id);
+      c.words.push({id:id,en:w.en,zh:w.zh,pos:w.pos,ex:w.ex,exZh:w.exZh,hl:w.hl});
+    });
+  });
+  return {cats:cats.filter(function(c){return c.words.length;}),skipped:skipped,dupSheets:dupSheets};
+}
+function flatWords(book,catId){
+  const out=[];
+  if(catId===ALL){book.cats.forEach(function(c){c.words.forEach(function(w){out.push({w:w,cat:c.name});});});return out;}
+  const c=book.cats.find(function(c){return c.id===catId;});
+  if(c) c.words.forEach(function(w){out.push({w:w,cat:c.name});});
+  return out;
+}
+function buildQueue(book,catId,known,startIx,includeKnown){
+  const q=[];
+  flatWords(book,catId).forEach(function(e,ix){
+    if(ix>=startIx&&(includeKnown||!known[e.w.id])) q.push({w:e.w,cat:e.cat,ix:ix});
+  });
+  return q;
+}
+/* ==core:end== */
+
+/* ---------- built-in vocabulary (from the family's Excel) ---------- */
+const BUILTIN={builtin:true,cats:[{"id":"國家與地區","name":"國家與地區","words":[{"id":"國家與地區||country","en":"country","zh":"國家；鄉下","pos":"","ex":"Taiwan is a beautiful country with many mountains.","exZh":"臺灣是一個擁有很多山脈的美麗國家。","hl":""},{"id":"國家與地區||world","en":"world","zh":"世界","pos":"","ex":"Mike always dreamed of sailing around the world.","exZh":"Mike 總是夢想著航行全世界。","hl":""},{"id":"國家與地區||america / the u.s.a.","en":"America / the U.S.A.","zh":"美國","pos":"","ex":"My cousin is studying in America right now.","exZh":"我堂弟現在正在美國讀書。","hl":""},{"id":"國家與地區||china","en":"China","zh":"中國","pos":"","ex":"The Great Wall is in China.","exZh":"長城在中國。","hl":""},{"id":"國家與地區||taiwan","en":"Taiwan","zh":"臺灣","pos":"","ex":"Taiwan is my home and I love it.","exZh":"臺灣是我的家，我愛它。","hl":""},{"id":"國家與地區||the r.o.c.","en":"the R.O.C.","zh":"中華民國","pos":"","ex":"Our national flag belongs to the R.O.C.","exZh":"我們的國旗屬於中華民國。","hl":""},{"id":"國家與地區||national","en":"national","zh":"國家的","pos":"","ex":"They sang the national anthem at the ceremony.","exZh":"他們在典禮上唱國歌。","hl":""},{"id":"國家與地區||american","en":"American","zh":"美國的","pos":"","ex":"I really like watching American baseball games.","exZh":"我真的很喜歡看美國棒球比賽。","hl":""}]},{"id":"假日與節慶","name":"假日與節慶","words":[{"id":"假日與節慶||chinese new year","en":"Chinese New Year","zh":"農曆新年","pos":"","ex":"We usually have a big dinner on Chinese New Year.","exZh":"我們通常在農曆新年吃大餐。","hl":""},{"id":"假日與節慶||new year's eve","en":"New Year's Eve","zh":"新年前夕 (除夕)","pos":"","ex":"Children get red envelopes on New Year's Eve.","exZh":"孩子們在除夕夜會領到紅包。","hl":""},{"id":"假日與節慶||lantern festival","en":"Lantern Festival","zh":"元宵節","pos":"","ex":"We saw many beautiful lanterns during the Lantern Festival.","exZh":"我們在元宵節期間看到許多漂亮的燈籠。","hl":""},{"id":"假日與節慶||moon festival","en":"Moon Festival","zh":"中秋節","pos":"","ex":"We enjoy eating mooncakes and BBQ on Moon Festival.","exZh":"中秋節我們喜歡吃月餅和烤肉。","hl":""},{"id":"假日與節慶||teacher's day","en":"Teacher's Day","zh":"教師節","pos":"","ex":"Happy Teacher's Day to all my teachers!","exZh":"祝我所有的老師教師節快樂！","hl":""},{"id":"假日與節慶||christmas","en":"Christmas","zh":"聖誕節","pos":"","ex":"We put up a Christmas tree in our living room.","exZh":"我們在客廳佈置了一棵聖誕樹。","hl":""},{"id":"假日與節慶||easter","en":"Easter","zh":"復活節","pos":"","ex":"Children like searching for eggs on Easter.","exZh":"孩子們喜歡在復活節尋找蛋。","hl":""},{"id":"假日與節慶||halloween","en":"Halloween","zh":"萬聖節","pos":"","ex":"Kids dress up in scary costumes on Halloween.","exZh":"孩子們在萬聖節穿上可怕的裝扮。","hl":""},{"id":"假日與節慶||mother's day","en":"Mother's Day","zh":"母親節","pos":"","ex":"We gave Mom a bouquet of flowers for Mother's Day.","exZh":"我們在母親節送給媽媽一束花。","hl":""},{"id":"假日與節慶||father's day","en":"Father's Day","zh":"父親節","pos":"","ex":"Father's Day in Taiwan is on August 8th.","exZh":"臺灣的父親節是在八月八日。","hl":""},{"id":"假日與節慶||festival","en":"festival","zh":"節慶","pos":"","ex":"There are many traditional festivals in Taiwan.","exZh":"臺灣有許多傳統節慶。","hl":""},{"id":"假日與節慶||holiday","en":"holiday","zh":"假日；節日","pos":"","ex":"Tomorrow is a national holiday, so we don't have school.","exZh":"明天是國定假日，所以我們不用上學。","hl":""},{"id":"假日與節慶||vacation","en":"vacation","zh":"假期","pos":"","ex":"We are going to Taitung for our summer vacation.","exZh":"我們暑假要去臺東玩。","hl":""},{"id":"假日與節慶||celebrate","en":"celebrate","zh":"慶祝","pos":"","ex":"How are you going to celebrate your birthday?","exZh":"你打算如何慶祝你的生日？","hl":""},{"id":"假日與節慶||holiday/vacation","en":"holiday/vacation","zh":"holiday 是可數；vacation 不可數","pos":"精析：用法區別","ex":"We had a short holiday.","exZh":"","hl":""}]},{"id":"地方與位置","name":"地方與位置","words":[{"id":"地方與位置||back","en":"back","zh":"背面","pos":"","ex":"Look at the picture. The toy bear is on the back of the bookshelf.","exZh":"看這張照片。玩具熊在書架的背面。","hl":"back"},{"id":"地方與位置||bottom","en":"bottom","zh":"底部","pos":"","ex":"There is some water at the bottom of the bottle.","exZh":"瓶子底部還有一些水。","hl":"bottom"},{"id":"地方與位置||front","en":"front","zh":"前面","pos":"","ex":"There is a tall tree in front of my house.","exZh":"我家前面有一棵高大的樹。","hl":"front"},{"id":"地方與位置||left","en":"left","zh":"左邊","pos":"","ex":"In England, traffic keeps to the left, not the right.","exZh":"在英國，交通動線是靠左行駛，而不是靠右。","hl":"left"},{"id":"地方與位置||middle","en":"middle","zh":"中間","pos":"","ex":"Sally, look at the picture. Tom is on my left, and John is on my right. I'm in the middle.","exZh":"Sally 看一下照片。Tom 在我左邊，John 在我右邊。我在中間。","hl":"middle"},{"id":"地方與位置||right","en":"right","zh":"右邊","pos":"","ex":"Our classroom is on the right side of the hallway.","exZh":"我們的教室在走廊的右側。","hl":"right"},{"id":"地方與位置||east","en":"east","zh":"東方","pos":"","ex":"Taipei is in the north of Taiwan, and Hualien is in the east.","exZh":"台北在台灣北部，而花蓮在東部。","hl":"east"},{"id":"地方與位置||west","en":"west","zh":"西方","pos":"","ex":"The sun sets in the west every evening.","exZh":"太陽每天傍晚從西方落下。","hl":"west"},{"id":"地方與位置||side","en":"side","zh":"旁邊","pos":"","ex":"Please stand by my side so we can take a photo together.","exZh":"請站在我身邊，我們可以一起拍張照。","hl":"side"},{"id":"地方與位置||south","en":"south","zh":"南方","pos":"","ex":"Kaohsiung is a big city in the south of Taiwan.","exZh":"高雄是台灣南方的一個大城市。","hl":"south"},{"id":"地方與位置||north","en":"north","zh":"北方","pos":"","ex":"It's very cold in the north during winter.","exZh":"北方的冬天非常寒冷。","hl":"north"},{"id":"地方與位置||top","en":"top","zh":"頂端","pos":"","ex":"The toy bear is on the top of the bookshelf.","exZh":"玩具熊在書架的最頂端。","hl":"top"},{"id":"地方與位置||bakery","en":"bakery","zh":"麵包店 (複數 -eries)","pos":"","ex":"Would you go to the bakery to get some bread for me?","exZh":"你可以去麵包店幫我買些麵包嗎？","hl":"bakery"},{"id":"地方與位置||bank","en":"bank","zh":"銀行","pos":"","ex":"Yesterday all my family ate at a nice restaurant near the bank.","exZh":"昨天我們全家在銀行附近的一家好餐廳吃飯。","hl":"bank"},{"id":"地方與位置||bookstore","en":"bookstore","zh":"書店","pos":"","ex":"We often go to the bookstore to look for a magazine or a book.","exZh":"我們常去書店找雜誌或書。","hl":"bookstore"},{"id":"地方與位置||castle","en":"castle","zh":"城堡","pos":"","ex":"The king lives in a beautiful castle on the hill.","exZh":"國王住在山上一座美麗的城堡裡。","hl":"castle"},{"id":"地方與位置||church","en":"church","zh":"教堂","pos":"","ex":"They go to church every Sunday morning.","exZh":"他們每個星期天早上都去教堂。","hl":"church"},{"id":"地方與位置||department store","en":"department store","zh":"百貨公司","pos":"","ex":"I want to buy a new dress at the department store.","exZh":"我想在百貨公司買一件新洋裝。","hl":"department store"},{"id":"地方與位置||factory","en":"factory","zh":"工廠 (複數 -ories)","pos":"","ex":"My uncle works in a big electronic factory.","exZh":"我舅舅在一家大型電子工廠工作。","hl":"factory"},{"id":"地方與位置||fire station","en":"fire station","zh":"消防局","pos":"","ex":"If there is a fire, call the fire station immediately.","exZh":"如果發生火災，請立即打給消防局。","hl":"fire station"},{"id":"地方與位置||flower shop","en":"flower shop","zh":"花店","pos":"","ex":"He bought a bunch of roses at the flower shop.","exZh":"他在花店買了一束玫瑰花。","hl":"flower shop"},{"id":"地方與位置||hospital","en":"hospital","zh":"醫院","pos":"","ex":"The driver who got hurt in the car accident was sent to the hospital right away.","exZh":"在車禍中受傷的駕駛被立刻送往醫院。","hl":"hospital"},{"id":"地方與位置||hotel","en":"hotel","zh":"旅館","pos":"","ex":"We stayed in a five-star hotel during our trip to Japan.","exZh":"我們去日本旅行時住了一家五星級飯店。","hl":"hotel"},{"id":"地方與位置||market","en":"market","zh":"市場","pos":"","ex":"My grandmother likes to buy fresh fruit at the market.","exZh":"我奶奶喜歡在市場買新鮮水果。","hl":"market"},{"id":"地方與位置||movie theater","en":"movie theater","zh":"電影院","pos":"","ex":"Many people are waiting in a line in front of the movie theater.","exZh":"許多人在電影院前排隊。","hl":"movie theater"},{"id":"地方與位置||museum","en":"museum","zh":"博物館","pos":"","ex":"Let's go to the museum to watch the old machines made long ago.","exZh":"我們去博物館看很久以前製造的舊機器吧。","hl":"museum"},{"id":"地方與位置||office","en":"office","zh":"辦公室","pos":"","ex":"My dad is busy working in his office now.","exZh":"我爸現在正忙著在辦公室工作。","hl":"office"},{"id":"地方與位置||park","en":"park","zh":"公園","pos":"","ex":"I like to go jogging in the park near my house.","exZh":"我喜歡在我家附近的公園慢跑。","hl":"park"},{"id":"地方與位置||post office","en":"post office","zh":"郵局","pos":"","ex":"The parents went to the post office to mail a package.","exZh":"父母親去郵局寄包裹。","hl":"post office"},{"id":"地方與位置||police station","en":"police station","zh":"警察局","pos":"","ex":"They went to the police station for help to find their lost child.","exZh":"他們去警察局尋求協助以尋找走失的小孩。","hl":"police station"},{"id":"地方與位置||restroom","en":"restroom","zh":"洗手間","pos":"","ex":"Excuse me, where is the restroom?","exZh":"不好意思，請問洗手間在哪裡？","hl":"restroom"},{"id":"地方與位置||restaurant","en":"restaurant","zh":"餐廳","pos":"","ex":"Yesterday all my family ate at a nice restaurant to celebrate Dad's birthday.","exZh":"昨天我們全家人在一家很棒的餐廳用餐，幫爸爸慶祝生日。","hl":"restaurant"},{"id":"地方與位置||shop","en":"shop","zh":"商店","pos":"","ex":"She owns a small coffee shop in the city.","exZh":"她在城市裡開了一間小咖啡店。","hl":"shop"},{"id":"地方與位置||supermarket","en":"supermarket","zh":"超級市場","pos":"","ex":"My mother buys fresh vegetables at the supermarket every morning.","exZh":"我媽媽每天早上都在超市買新鮮蔬菜。","hl":"supermarket"},{"id":"地方與位置||temple","en":"temple","zh":"寺廟","pos":"","ex":"There are many old temples in Tainan.","exZh":"台南有很多古老的寺廟。","hl":"temples"},{"id":"地方與位置||zoo","en":"zoo","zh":"動物園","pos":"","ex":"Children are excited to see elephants and lions at the zoo.","exZh":"小孩子們在動物園看到大象和獅子都很興奮。","hl":"zoo"},{"id":"地方與位置||farm","en":"farm","zh":"農田；農場","pos":"","ex":"They grow corn and tomatoes on their farm.","exZh":"他們在農場裡種玉米和番茄。","hl":"farm"},{"id":"地方與位置||corner","en":"corner","zh":"角落","pos":"","ex":"Go down the street. It's on the corner of First Street and Second Street.","exZh":"沿著這條街走。它就在第一街和第二街的轉角。","hl":"corner"},{"id":"地方與位置||city","en":"city","zh":"城市 (複數 -ties)","pos":"","ex":"Taipei is a very busy and crowded city.","exZh":"台北是一個非常繁忙且擁擠的城市。","hl":"city"},{"id":"地方與位置||country","en":"country","zh":"鄉下 (複數 -ries)","pos":"","ex":"Life in the country is quiet and peaceful.","exZh":"鄉下的生活安靜又祥和。","hl":"country"},{"id":"地方與位置||road","en":"road","zh":"路","pos":"","ex":"Be careful when you walk on the road.","exZh":"你走在路上時要小心。","hl":"road"},{"id":"地方與位置||street","en":"street","zh":"街道","pos":"","ex":"There are many shops on this street.","exZh":"這條街上有許多商店。","hl":"street"},{"id":"地方與位置||place","en":"place","zh":"地方","pos":"","ex":"This is a great place to take photos.","exZh":"這是個拍照的好地方。","hl":"place"},{"id":"地方與位置||town","en":"town","zh":"城鎮；鬧區","pos":"","ex":"My grandparents live in a small town in central Taiwan.","exZh":"我祖父母住在台灣中部的一個小鎮。","hl":"town"}]},{"id":"交通運輸與移動","name":"交通運輸與移動","words":[{"id":"交通運輸與移動||airplane / plane","en":"airplane / plane","zh":"飛機","pos":"","ex":"Mr. White will fly to New York tomorrow. I'll drive him to the airport.","exZh":"White 先生明天要飛往紐約，我會開車送他去機場。","hl":""},{"id":"交通運輸與移動||bicycle / bike","en":"bicycle / bike","zh":"腳踏車","pos":"","ex":"Many students ride a bike to school as a kind of exercise.","exZh":"許多學生騎腳踏車上學，當作一種運動。","hl":"bike"},{"id":"交通運輸與移動||boat","en":"boat","zh":"小船","pos":"","ex":"We can take a boat to visit the small island.","exZh":"我們可以搭小船去參觀那個小島。","hl":"boat"},{"id":"交通運輸與移動||bus","en":"bus","zh":"公車","pos":"","ex":"It is very convenient to take a bus in Taipei.","exZh":"在台北搭公車非常方便。","hl":"bus"},{"id":"交通運輸與移動||car","en":"car","zh":"汽車","pos":"","ex":"My father drives a car to work every morning.","exZh":"我父親每天早上開車上班。","hl":"car"},{"id":"交通運輸與移動||motorcycle","en":"motorcycle","zh":"摩托車","pos":"","ex":"In Taiwan, many people ride a motorcycle to work.","exZh":"在台灣，很多人騎摩托車上班。","hl":"motorcycle"},{"id":"交通運輸與移動||scooter","en":"scooter","zh":"輕型機車 (速克達)","pos":"","ex":"It is convenient to ride a scooter in the city.","exZh":"在城市裡騎機車很方便。","hl":"scooter"},{"id":"交通運輸與移動||ship","en":"ship","zh":"船","pos":"","ex":"Mike always dreamed of sailing around the world by ship.","exZh":"Mike 總夢想著搭船環遊世界。","hl":"ship"},{"id":"交通運輸與移動||taxi","en":"taxi","zh":"計程車","pos":"","ex":"If you are in a hurry, you can take a taxi.","exZh":"如果你趕時間，可以搭計程車。","hl":"taxi"},{"id":"交通運輸與移動||train","en":"train","zh":"火車","pos":"","ex":"They built a new railway from Beijing to Tibet. Now it's convenient to go by train.","exZh":"他們蓋了一條從北京到西藏的新鐵路，現在搭火車去很方便。","hl":"train"},{"id":"交通運輸與移動||truck","en":"truck","zh":"卡車","pos":"","ex":"The big truck is carrying many boxes to the factory.","exZh":"那輛大卡車正載著許多箱子去工廠。","hl":"truck"},{"id":"交通運輸與移動||airport","en":"airport","zh":"機場","pos":"","ex":"Mr. White's plane will land at the airport in ten minutes.","exZh":"White 先生的飛機十分鐘後會降落在機場。","hl":"airport"},{"id":"交通運輸與移動||bus stop","en":"bus stop","zh":"公車招呼站","pos":"","ex":"Please wait for me at the bus stop.","exZh":"請在公車停靠站等我。","hl":"bus stop"},{"id":"交通運輸與移動||station","en":"station","zh":"車站","pos":"","ex":"When will the train arrive at the station?","exZh":"火車什麼時候會到達車站？","hl":"station"},{"id":"交通運輸與移動||train station","en":"train station","zh":"火車站","pos":"","ex":"The train station is crowded during the holidays.","exZh":"連假期間火車站非常擁擠。","hl":"train station"},{"id":"交通運輸與移動||bridge","en":"bridge","zh":"橋","pos":"","ex":"There's a bridge over the river. People can get to the other side by crossing it.","exZh":"河上有一座橋，人們可以透過過橋到對岸。","hl":"bridge"},{"id":"交通運輸與移動||mrt","en":"MRT","zh":"捷運","pos":"","ex":"If we ride on the MRT, we'll arrive home safely and quickly.","exZh":"如果我們搭捷運，就能安全又快速地回到家。","hl":"MRT"},{"id":"交通運輸與移動||railway","en":"railway","zh":"鐵路","pos":"","ex":"The railway connects many different cities.","exZh":"這條鐵路連接了許多不同的城市。","hl":"railway"},{"id":"交通運輸與移動||rule","en":"rule","zh":"規則","pos":"","ex":"We should follow the traffic rules to keep safe.","exZh":"我們應該遵守交通規則以保安全。","hl":"rules"},{"id":"交通運輸與移動||seat","en":"seat","zh":"座位","pos":"","ex":"Is this seat taken?","exZh":"這個位子有人坐嗎？","hl":"seat"},{"id":"交通運輸與移動||sidewalk","en":"sidewalk","zh":"人行道","pos":"","ex":"People should walk on the sidewalk for safety.","exZh":"為了安全，人們應該走在人行道上。","hl":"sidewalk"},{"id":"交通運輸與移動||space","en":"space","zh":"空間","pos":"","ex":"There is no more space in the car for another person.","exZh":"車子裡沒有空間再載一個人了。","hl":"space"},{"id":"交通運輸與移動||ticket","en":"ticket","zh":"票","pos":"","ex":"You have to get a ticket before getting on the MRT.","exZh":"搭捷運之前你必須先買票。","hl":"ticket"},{"id":"交通運輸與移動||traffic","en":"traffic","zh":"交通","pos":"","ex":"The traffic here is always heavy during rush hours. All cars move slowly.","exZh":"這裡尖峰時段的交通總是很擁擠，所有的車都開得很慢。","hl":"traffic"},{"id":"交通運輸與移動||sign","en":"sign","zh":"標誌","pos":"","ex":"Look at the traffic sign. You can't turn left here.","exZh":"看那個交通標誌，這裡不能左轉。","hl":"sign"},{"id":"交通運輸與移動||block","en":"block","zh":"街區；障礙物","pos":"","ex":"Go down the street for two blocks, and you will see the bank.","exZh":"沿著這條街走過兩個街口，你就會看到銀行。","hl":"blocks"},{"id":"交通運輸與移動||arrive","en":"arrive","zh":"到達","pos":"","ex":"The train will arrive on time.","exZh":"火車會準時到達。","hl":"arrive"},{"id":"交通運輸與移動||cross","en":"cross","zh":"橫越","pos":"","ex":"Before you cross the street, be sure to look to the left and the right.","exZh":"在你過馬路之前，一定要看左右兩邊。","hl":"cross"},{"id":"交通運輸與移動||drive","en":"drive","zh":"開車","pos":"","ex":"My uncle learned how to drive a truck last year.","exZh":"我叔叔去年學會了開大卡車。","hl":"drive"},{"id":"交通運輸與移動||fly","en":"fly","zh":"飛行 (過去式 flew)","pos":"","ex":"Bird can fly high in the sky.","exZh":"鳥可以在天空中飛得很高。","hl":"fly"},{"id":"交通運輸與移動||land","en":"land","zh":"動：著陸 名：陸地","pos":"","ex":"The airplane landed safely despite the heavy rain.","exZh":"儘管下大雨，飛機還是安全降落了。","hl":"landed"},{"id":"交通運輸與移動||park","en":"park","zh":"停車","pos":"","ex":"You can't park your car in front of the gate.","exZh":"你不能把車停在大門口前。","hl":"park"},{"id":"交通運輸與移動||ride","en":"ride","zh":"乘坐；騎 (過去式 rode)","pos":"","ex":"Many students ride bikes to school every day.","exZh":"許多學生每天騎腳踏車上學。","hl":"ride"},{"id":"交通運輸與移動||turn","en":"turn","zh":"轉彎","pos":"","ex":"Turn left at the next corner.","exZh":"在下個轉角左轉。","hl":"Turn"},{"id":"交通運輸與移動||fast","en":"fast","zh":"快的","pos":"","ex":"The MRT is very fast and convenient.","exZh":"捷運非常快速且方便。","hl":"fast"},{"id":"交通運輸與移動||quick","en":"quick","zh":"迅速的","pos":"","ex":"We need to make a quick decision.","exZh":"我們需要迅速做決定。","hl":"quick"},{"id":"交通運輸與移動||slow","en":"slow","zh":"慢的","pos":"","ex":"The traffic moves very slowly because of the rain.","exZh":"因為下雨的關係，交通流動非常緩慢。","hl":"slowly"}]},{"id":"尺寸、形狀與計量","name":"尺寸、形狀與計量","words":[{"id":"尺寸、形狀與計量||centimeter","en":"centimeter","zh":"公分","pos":"","ex":"The ruler is 30 centimeters long.","exZh":"這把尺有 30 公分長。","hl":"centimeters"},{"id":"尺寸、形狀與計量||foot","en":"foot","zh":"呎 (複數 feet)","pos":"","ex":"Bob gets taller than his father. He is seven feet tall now.","exZh":"Bob 長得比他爸還高了，他現在有七呎高。","hl":"feet"},{"id":"尺寸、形狀與計量||gram","en":"gram","zh":"公克","pos":"","ex":"A small apple is about 150 grams.","exZh":"一顆小蘋果大約 150 公克。","hl":"grams"},{"id":"尺寸、形狀與計量||inch","en":"inch","zh":"吋 (複數 inches)","pos":"","ex":"My father bought a 50-inch TV yesterday.","exZh":"我爸昨天買了一台 50 吋的電視。","hl":"inch"},{"id":"尺寸、形狀與計量||kilogram = kg","en":"kilogram = kg","zh":"公斤","pos":"","ex":"I want to lose three kilograms this month.","exZh":"我這個月想減掉三公斤。","hl":"kilograms"},{"id":"尺寸、形狀與計量||mile","en":"mile","zh":"哩","pos":"","ex":"The gas station is two miles away from here.","exZh":"加油站離這裡有兩英哩遠。","hl":"miles"},{"id":"尺寸、形狀與計量||pound","en":"pound","zh":"磅","pos":"","ex":"We need five pounds of flour to make the bread.","exZh":"我們需要五磅的麵粉來做麵包。","hl":"pounds"},{"id":"尺寸、形狀與計量||circle","en":"circle","zh":"圓圈","pos":"","ex":"Many people are waiting in a line, not a circle, to watch the movie.","exZh":"許多人在排隊（不是站成圓圈）等著看電影。","hl":"circle"},{"id":"尺寸、形狀與計量||dot","en":"dot","zh":"小點","pos":"","ex":"There is a red dot on your shirt.","exZh":"你的襯衫上有一個紅點。","hl":"dot"},{"id":"尺寸、形狀與計量||line","en":"line","zh":"行；線","pos":"","ex":"Please stand in line and wait for your turn.","exZh":"請排隊並等待輪到你。","hl":"line"},{"id":"尺寸、形狀與計量||point","en":"point","zh":"點","pos":"","ex":"The teacher used a laser point to show the important words.","exZh":"老師用雷射筆（紅點）指出重要的單詞。","hl":"point"},{"id":"尺寸、形狀與計量||row","en":"row","zh":"列","pos":"","ex":"We sit in the front row of the classroom.","exZh":"我們坐在教室的第一排。","hl":"row"},{"id":"尺寸、形狀與計量||shape","en":"shape","zh":"形狀","pos":"","ex":"We have to make each cake into a square shape and then bake them.","exZh":"我們得把每個蛋糕弄成正方形，然後再去烤。","hl":"shape"},{"id":"尺寸、形狀與計量||square","en":"square","zh":"正方形","pos":"","ex":"A square has four equal sides.","exZh":"正方形有四個相等的邊。","hl":"square"},{"id":"尺寸、形狀與計量||big","en":"big","zh":"大的","pos":"","ex":"Susan has a round face, not a big face.","exZh":"Susan 有張圓臉，而不是大臉。","hl":"big"},{"id":"尺寸、形狀與計量||far","en":"far","zh":"遠的","pos":"","ex":"Is the school far from your home?","exZh":"學校離你家遠嗎？","hl":"far"},{"id":"尺寸、形狀與計量||high","en":"high","zh":"高的","pos":"","ex":"The doorbell is too high for the boy to ring.","exZh":"電鈴太高了，那個男孩按不到。","hl":"high"},{"id":"尺寸、形狀與計量||large","en":"large","zh":"大的","pos":"","ex":"Would you like a large, medium, or small Coke?","exZh":"妳想要大杯、中杯還是小杯的可樂？","hl":"large"},{"id":"尺寸、形狀與計量||little","en":"little","zh":"小的","pos":"","ex":"Look at that little bird singing in the tree.","exZh":"看那隻在樹上唱歌的小鳥。","hl":"little"},{"id":"尺寸、形狀與計量||light","en":"light","zh":"輕的","pos":"","ex":"This box is very light. I can carry it by myself.","exZh":"這個箱子很輕。我可以自己搬。","hl":"light"},{"id":"尺寸、形狀與計量||long","en":"long","zh":"長的","pos":"","ex":"How long is this river?","exZh":"這條河有多長？","hl":"long"},{"id":"尺寸、形狀與計量||low","en":"low","zh":"低的","pos":"","ex":"The table is too low for me.","exZh":"這張桌子對我來說太低了。","hl":"low"},{"id":"尺寸、形狀與計量||medium","en":"medium","zh":"中號的","pos":"","ex":"I usually wear medium size clothes.","exZh":"我通常穿中號的衣服。","hl":"medium"},{"id":"尺寸、形狀與計量||round","en":"round","zh":"圓的","pos":"","ex":"Most people like to sit at a round table for dinner.","exZh":"大多數人喜歡坐在圓桌旁吃晚餐。","hl":"round"},{"id":"尺寸、形狀與計量||short","en":"short","zh":"短的；矮的","pos":"","ex":"He is too short to play basketball well.","exZh":"他太矮了，籃球打得不好。","hl":"short"},{"id":"尺寸、形狀與計量||small","en":"small","zh":"小的","pos":"","ex":"We live in a small but comfortable house.","exZh":"我們住在一間雖小但很舒服的房子裡。","hl":"small"},{"id":"尺寸、形狀與計量||straight","en":"straight","zh":"直的","pos":"","ex":"Go straight for two blocks and turn left.","exZh":"直走兩個街口後左轉。","hl":"straight"},{"id":"尺寸、形狀與計量||bottle","en":"bottle","zh":"瓶","pos":"","ex":"We need a bottle of water for the hike.","exZh":"我們健行需要一瓶水。","hl":"bottle"},{"id":"尺寸、形狀與計量||can","en":"can","zh":"罐頭","pos":"","ex":"My mom bought three cans of tuna.","exZh":"我媽買了三罐鮪魚罐頭。","hl":"cans"},{"id":"尺寸、形狀與計量||dozen","en":"dozen","zh":"一打","pos":"","ex":"We need a dozen eggs for making the cake.","exZh":"我們需要一打雞蛋來做蛋糕。","hl":"dozen"},{"id":"尺寸、形狀與計量||pack","en":"pack","zh":"包","pos":"","ex":"He bought two packs of cookies for the picnic.","exZh":"他買了兩包餅乾要準備野餐。","hl":"packs"},{"id":"尺寸、形狀與計量||package","en":"package","zh":"包裹","pos":"","ex":"I received a package from my friend in America.","exZh":"我收到一封美國朋友寄來的包裹。","hl":"package"},{"id":"尺寸、形狀與計量||pair","en":"pair","zh":"對；雙","pos":"","ex":"My son's socks are too old. I'm going to buy him a new pair.","exZh":"我兒子的襪子太舊了。我要去幫他買一雙新的。","hl":"pair"},{"id":"尺寸、形狀與計量||piece","en":"piece","zh":"片","pos":"","ex":"Would you cut the bread into pieces for me?","exZh":"你可以幫我把麵包切成片嗎？","hl":"pieces"},{"id":"尺寸、形狀與計量||set","en":"set","zh":"一套","pos":"","ex":"I bought a set of new books yesterday.","exZh":"我昨天買了一套新書。","hl":"set"},{"id":"尺寸、形狀與計量||size","en":"size","zh":"尺寸","pos":"","ex":"What size shoes do you wear?","exZh":"你穿幾號的鞋子？","hl":"size"}]},{"id":"學校與學習","name":"學校與學習","words":[{"id":"學校與學習||elementary school","en":"elementary school","zh":"小學","pos":"","ex":"Children start elementary school at the age of six.","exZh":"孩子們六歲開始上小學。","hl":"elementary school"},{"id":"學校與學習||junior high school","en":"junior high school","zh":"國中","pos":"","ex":"Students in Taiwan go to junior high school after elementary school.","exZh":"台灣學生小學畢業後上國中。","hl":"junior high school"},{"id":"學校與學習||senior high school","en":"senior high school","zh":"高中","pos":"","ex":"He is studying hard to get into a good senior high school.","exZh":"他正努力讀書為了考上好高中。","hl":"senior high school"},{"id":"學校與學習||classroom","en":"classroom","zh":"教室","pos":"","ex":"Please keep the classroom clean.","exZh":"請保持教室整潔。","hl":"classroom"},{"id":"學校與學習||gym","en":"gym","zh":"體育館","pos":"","ex":"We usually have our PE class in the gym.","exZh":"我們通常在體育館上體育課。","hl":"gym"},{"id":"學校與學習||playground","en":"playground","zh":"遊戲場","pos":"","ex":"Many kids are playing on the playground.","exZh":"許多小孩在遊戲場玩耍。","hl":"playground"},{"id":"學校與學習||library","en":"library","zh":"圖書館 (複數 -aries)","pos":"","ex":"Always keep quiet in the library, where people are reading.","exZh":"在有人閱讀的圖書館裡請保持安靜。","hl":"library"},{"id":"學校與學習||seesaw","en":"seesaw","zh":"蹺蹺板","pos":"","ex":"Look at the picture. The girl is playing on the seesaw.","exZh":"看這張照片。那個女孩在玩蹺蹺板。","hl":"seesaw"},{"id":"學校與學習||slide","en":"slide","zh":"溜滑梯","pos":"","ex":"Children love to play on the slide.","exZh":"小孩子喜歡玩溜滑梯。","hl":"slide"},{"id":"學校與學習||swing","en":"swing","zh":"鞦韆","pos":"","ex":"Be careful when you play on the swing.","exZh":"玩鞦韆時要小心。","hl":"swing"},{"id":"學校與學習||blackboard","en":"blackboard","zh":"黑板","pos":"","ex":"The teacher is writing some words on the blackboard.","exZh":"老師正在黑板上寫字。","hl":"blackboard"},{"id":"學校與學習||book","en":"book","zh":"書","pos":"","ex":"There are many books on the shelf.","exZh":"書架上有許多書。","hl":"books"},{"id":"學校與學習||chalk","en":"chalk","zh":"粉筆","pos":"","ex":"Our teacher told us not to write on the blackboard with chalk.","exZh":"老師叫我們不要用粉筆在黑板上亂寫。","hl":"chalk"},{"id":"學校與學習||dictionary","en":"dictionary","zh":"字典 (複數 -aries)","pos":"","ex":"A dictionary is like your teacher. It can tell you what a word means.","exZh":"字典就像你的老師。它可以告訴你單字是什麼意思。","hl":"dictionary"},{"id":"學校與學習||envelope","en":"envelope","zh":"信封","pos":"","ex":"Put the letter into an envelope before you mail it.","exZh":"寄信前請把信放入信封。","hl":"envelope"},{"id":"學校與學習||eraser","en":"eraser","zh":"橡皮擦","pos":"","ex":"Can I borrow your eraser? I made a mistake.","exZh":"我可以借你的橡皮擦嗎？我寫錯了。","hl":"eraser"},{"id":"學校與學習||glue","en":"glue","zh":"膠水","pos":"","ex":"Use some glue to stick the picture on the paper.","exZh":"用些膠水把照片貼在紙上。","hl":"glue"},{"id":"學校與學習||letter","en":"letter","zh":"信；字母","pos":"","ex":"I wrote a letter to my grandmother.","exZh":"我寫了一封信給奶奶。","hl":"letter"},{"id":"學校與學習||map","en":"map","zh":"地圖","pos":"","ex":"Let's look at the map to see how to get there.","exZh":"我們看看地圖，看怎麼去那裡。","hl":"map"},{"id":"學校與學習||marker","en":"marker","zh":"彩色筆；書籤","pos":"","ex":"Use a red marker to highlight the important parts.","exZh":"用紅色彩色筆標示重點。","hl":"marker"},{"id":"學校與學習||notebook","en":"notebook","zh":"筆記本","pos":"","ex":"I take notes in my notebook during class.","exZh":"課堂中我會在筆記本上記筆記。","hl":"notebook"},{"id":"學校與學習||page","en":"page","zh":"頁","pos":"","ex":"Please turn to page 25.","exZh":"請翻到第 25 頁。","hl":"page"},{"id":"學校與學習||paper","en":"paper","zh":"紙","pos":"","ex":"Do you have a piece of paper? I need to write something.","exZh":"你有一張紙嗎？我需要寫點東西。","hl":"paper"},{"id":"學校與學習||pen","en":"pen","zh":"筆","pos":"","ex":"I always keep a pen in my pocket.","exZh":"我口袋裡總是放著一枝筆。","hl":"pen"},{"id":"學校與學習||pencil","en":"pencil","zh":"鉛筆","pos":"","ex":"Use a pencil to draw the picture first.","exZh":"先用鉛筆把圖畫出來。","hl":"pencil"},{"id":"學校與學習||pencil box","en":"pencil box","zh":"鉛筆盒","pos":"","ex":"Don't forget to put your pens back into your pencil box.","exZh":"別忘了把筆放回鉛筆盒裡。","hl":"pencil box"},{"id":"學校與學習||ruler","en":"ruler","zh":"尺","pos":"","ex":"I use a ruler to draw straight lines.","exZh":"我用尺畫直線。","hl":"ruler"},{"id":"學校與學習||workbook","en":"workbook","zh":"作業簿","pos":"","ex":"Please hand in your workbook tomorrow morning.","exZh":"請在明天早上交出你的作業簿。","hl":"workbook"},{"id":"學校與學習||art","en":"art","zh":"美術","pos":"","ex":"Art is my favorite subject because I love painting.","exZh":"美術是我最愛的科目，因為我喜歡畫畫。","hl":"Art"},{"id":"學校與學習||course","en":"course","zh":"課程；行程","pos":"","ex":"This online English course is very helpful.","exZh":"這個線上英文課程很有幫助。","hl":"course"},{"id":"學校與學習||subject","en":"subject","zh":"科目","pos":"","ex":"What is your favorite subject at school?","exZh":"你在學校最喜歡什麼科目？","hl":"subject"},{"id":"學校與學習||chinese","en":"Chinese","zh":"中文","pos":"","ex":"We have Chinese class every day.","exZh":"我們每天都有國文課。","hl":"Chinese"},{"id":"學校與學習||english","en":"English","zh":"英文","pos":"","ex":"English is an important language for everyone.","exZh":"英文對每個人來說都是重要的語言。","hl":"English"},{"id":"學校與學習||class","en":"class","zh":"課；班級","pos":"","ex":"We have a math class on Wednesday.","exZh":"我們週三有數學課。","hl":"class"},{"id":"學校與學習||language","en":"language","zh":"語言","pos":"","ex":"Learning a new language takes a lot of time.","exZh":"學習新語言需要很多時間。","hl":"language"},{"id":"學校與學習||math / mathematics","en":"math / mathematics","zh":"數學","pos":"","ex":"Tina isn't good at numbers, so she doesn't like math.","exZh":"Tina 對數字不拿手，所以她不喜歡數學。","hl":"math"},{"id":"學校與學習||pe","en":"PE","zh":"體育 (physical education)","pos":"","ex":"We have PE class today, so we have to wear sports clothes.","exZh":"我們今天有體育課，所以要穿運動服。","hl":"PE"},{"id":"學校與學習||history","en":"history","zh":"歷史","pos":"","ex":"We can learn about the past in history class.","exZh":"我們可以在歷史課學到關於過去的事。","hl":"history"},{"id":"學校與學習||science","en":"science","zh":"科學","pos":"","ex":"We did a fun experiment in science class today.","exZh":"我們今天在科學課做了一個有趣的實驗。","hl":"science"},{"id":"學校與學習||answer","en":"answer","zh":"回答","pos":"","ex":"Did you answer the teacher's question?","exZh":"你有回答老師的問題嗎？","hl":"answer"},{"id":"學校與學習||ask","en":"ask","zh":"問","pos":"","ex":"If you have any questions, please ask me.","exZh":"如果你有任何問題，請問我。","hl":"ask"},{"id":"學校與學習||cheat","en":"cheat","zh":"作弊","pos":"","ex":"Our teacher always tells us not to cheat on a test.","exZh":"老師總是告訴我們考試不要作弊。","hl":"cheat"},{"id":"學校與學習||fail","en":"fail","zh":"失敗；不及格","pos":"","ex":"If you don't study hard, you might fail the exam.","exZh":"如果你不努力唸書，考試可能會不及格。","hl":"fail"},{"id":"學校與學習||learn","en":"learn","zh":"學習；獲悉","pos":"","ex":"Students go to school to learn new knowledge.","exZh":"學生去學校學習新知識。","hl":"learn"},{"id":"學校與學習||listen","en":"listen","zh":"傾聽","pos":"","ex":"When the teacher is talking, you should listen carefully.","exZh":"老師說話時，你應該仔細聽。","hl":"listen"},{"id":"學校與學習||mark","en":"mark","zh":"做記號","pos":"","ex":"Please mark the words you don't understand.","exZh":"請在你看不懂的單字下做記號。","hl":"mark"},{"id":"學校與學習||pass","en":"pass","zh":"通過；及格","pos":"","ex":"I hope I can pass the English test this time.","exZh":"我希望這次英文考試能及格。","hl":"pass"},{"id":"學校與學習||practice","en":"practice","zh":"練習","pos":"","ex":"Practice makes perfect.","exZh":"練習成就完美（熟能生巧）。","hl":"Practice"},{"id":"學校與學習||prepare","en":"prepare","zh":"準備","pos":"","ex":"We should prepare for the final exam.","exZh":"我們應該為期末考做準備。","hl":"prepare"},{"id":"學校與學習||read","en":"read","zh":"閱讀 (過去式 read)","pos":"","ex":"I like to read comics in my free time.","exZh":"我空閒時間喜歡看漫畫。","hl":"read"},{"id":"學校與學習||repeat","en":"repeat","zh":"重說；重複","pos":"","ex":"When I'm telling you what to do, please repeat it.","exZh":"當我告訴你該怎麼做時，請重複一遍。","hl":"repeat"},{"id":"學校與學習||say","en":"say","zh":"說 (過去式 said)","pos":"","ex":"What did the teacher say about the homework?","exZh":"老師說作業要怎麼寫？","hl":"say"},{"id":"學校與學習||speak","en":"speak","zh":"演說 (過去式 spoke)","pos":"","ex":"May spoke too fast, so I couldn't understand her.","exZh":"May 講得太快，所以我聽不懂。","hl":""},{"id":"學校與學習||spell","en":"spell","zh":"拼字","pos":"","ex":"How do you spell your name?","exZh":"你的名字怎麼拼？","hl":"spell"},{"id":"學校與學習||study","en":"study","zh":"研讀","pos":"","ex":"You have to study hard to get good grades.","exZh":"你必須努力讀書才能拿好成績。","hl":"study"},{"id":"學校與學習||teach","en":"teach","zh":"教書 (過去式 taught)","pos":"","ex":"Mr. Wang teaches us math.","exZh":"王老師教我們數學。","hl":"teaches"},{"id":"學校與學習||talk","en":"talk","zh":"談話","pos":"","ex":"Don't talk in the library.","exZh":"不要在圖書館裡說話。","hl":"talk"},{"id":"學校與學習||understand","en":"understand","zh":"理解 (過去式 understood)","pos":"","ex":"Did you understand what the teacher taught?","exZh":"你有聽懂老師教的嗎？","hl":"understand"},{"id":"學校與學習||write","en":"write","zh":"寫 (過去式 wrote)","pos":"","ex":"Please write your name on the paper.","exZh":"請在紙上寫下你的名字。","hl":"write"},{"id":"學校與學習||example","en":"example","zh":"實例","pos":"","ex":"Can you give me an example of this word?","exZh":"你能給我這個單字的例句嗎？","hl":"example"},{"id":"學校與學習||grade","en":"grade","zh":"年級；成績","pos":"","ex":"John is in the seventh grade.","exZh":"John 讀國一。","hl":"grade"},{"id":"學校與學習||homework","en":"homework","zh":"作業","pos":"","ex":"I have a lot of homework to do tonight.","exZh":"我今晚有很多作業要寫。","hl":"homework"},{"id":"學校與學習||knowledge","en":"knowledge","zh":"知識","pos":"","ex":"Knowledge is power.","exZh":"知識就是力量。","hl":"Knowledge"},{"id":"學校與學習||lesson","en":"lesson","zh":"課程；教訓","pos":"","ex":"You should get a lesson from this embarrassing experience.","exZh":"你應該從這次尷尬的經驗中學到教訓。","hl":"lesson"},{"id":"學校與學習||problem","en":"problem","zh":"難題","pos":"","ex":"When we have a problem in life, we have to face it.","exZh":"當我們生活中遇到難題，必須面對它。","hl":"problem"},{"id":"學校與學習||question","en":"question","zh":"問題","pos":"","ex":"Do you have any questions about the lesson?","exZh":"你對這課有任何問題嗎？","hl":"questions"},{"id":"學校與學習||quiz","en":"quiz","zh":"小考","pos":"","ex":"We have a math quiz every Monday morning.","exZh":"我們每週一早上都有數學小考。","hl":"quiz"},{"id":"學校與學習||sentence","en":"sentence","zh":"句子","pos":"","ex":"Please use this word to make a sentence.","exZh":"請用這個單字造句。","hl":"sentence"},{"id":"學校與學習||test","en":"test","zh":"考試","pos":"","ex":"I felt nervous before the math test.","exZh":"數學考試前我覺得很緊張。","hl":"test"},{"id":"學校與學習||word","en":"word","zh":"字","pos":"","ex":"What does this word mean?","exZh":"這個字是什麼意思？","hl":"word"}]},{"id":"房屋與居住設備","name":"房屋與居住設備","words":[{"id":"房屋與居住設備||apartment","en":"apartment","zh":"公寓","pos":"","ex":"They live in a small apartment in the city.","exZh":"他們住在城市裡的一間小公寓。","hl":"apartment"},{"id":"房屋與居住設備||house","en":"house","zh":"房子","pos":"","ex":"They are building a new house near the park.","exZh":"他們正在公園附近蓋一棟新房子。","hl":"house"},{"id":"房屋與居住設備||home","en":"home","zh":"家","pos":"","ex":"It's time to go home.","exZh":"該回家的時間到了。","hl":"home"},{"id":"房屋與居住設備||bathroom","en":"bathroom","zh":"浴室","pos":"","ex":"I usually take a bath in the bathroom to relax.","exZh":"我通常在浴室泡澡來放鬆。","hl":"bathroom"},{"id":"房屋與居住設備||bedroom","en":"bedroom","zh":"臥室","pos":"","ex":"My bedroom is very small but cozy.","exZh":"我的臥室很小但很溫馨。","hl":"bedroom"},{"id":"房屋與居住設備||dining room","en":"dining room","zh":"餐廳","pos":"","ex":"We have dinner together in the dining room every day.","exZh":"我們每天都在餐廳一起吃晚餐。","hl":"dining room"},{"id":"房屋與居住設備||garden","en":"garden","zh":"花園","pos":"","ex":"Mrs. Wu likes gardening, so she has a beautiful garden.","exZh":"吳太太喜歡園藝，所以她有一個漂亮的花園。","hl":"garden"},{"id":"房屋與居住設備||kitchen","en":"kitchen","zh":"廚房","pos":"","ex":"My mom is cooking dinner in the kitchen.","exZh":"我媽正在廚房煮晚餐。","hl":"kitchen"},{"id":"房屋與居住設備||living room","en":"living room","zh":"客廳","pos":"","ex":"We usually watch TV together in the living room.","exZh":"我們通常一起在客廳看電視。","hl":"living room"},{"id":"房屋與居住設備||room","en":"room","zh":"房間；空間","pos":"","ex":"There is not much room in the drawer for my socks.","exZh":"抽屜裡沒有太多放襪子的空間了。","hl":"room"},{"id":"房屋與居住設備||study","en":"study","zh":"書房","pos":"","ex":"My father is reading a book in the study.","exZh":"我爸爸正在書房看書。","hl":"study"},{"id":"房屋與居住設備||yard","en":"yard","zh":"庭院","pos":"","ex":"Children like to play in the yard.","exZh":"小孩子喜歡在庭院玩。","hl":"yard"},{"id":"房屋與居住設備||floor","en":"floor","zh":"樓層；地板","pos":"","ex":"The woman is cleaning the floor. She is mopping it.","exZh":"那個女人正在清理地板。她正在拖地。","hl":"floor"},{"id":"房屋與居住設備||stairs","en":"stairs","zh":"樓梯","pos":"","ex":"Be careful when you go down the stairs.","exZh":"下樓梯時要小心。","hl":"stairs"},{"id":"房屋與居住設備||door","en":"door","zh":"門","pos":"","ex":"Please close the door when you leave.","exZh":"離開時請關門。","hl":"door"},{"id":"房屋與居住設備||gate","en":"gate","zh":"大門","pos":"","ex":"There is a big dog standing in front of the gate.","exZh":"大門口前站著一隻大狗。","hl":"gate"},{"id":"房屋與居住設備||wall","en":"wall","zh":"牆","pos":"","ex":"They are painting the wall white.","exZh":"他們正把牆漆成白色。","hl":"wall"},{"id":"房屋與居住設備||balcony","en":"balcony","zh":"陽台","pos":"","ex":"My father likes to drink coffee on the balcony.","exZh":"我爸爸喜歡在陽台上喝咖啡。","hl":"balcony"},{"id":"房屋與居住設備||bed","en":"bed","zh":"床","pos":"","ex":"I like to lie on my bed and listen to music.","exZh":"我喜歡躺在床上聽音樂。","hl":"bed"},{"id":"房屋與居住設備||window","en":"window","zh":"窗戶","pos":"","ex":"Please open the window to let the fresh air in.","exZh":"請打開窗戶讓新鮮空氣進來。","hl":"window"},{"id":"房屋與居住設備||bench","en":"bench","zh":"長凳","pos":"","ex":"We sat on a bench in the park to rest.","exZh":"我們坐在公園的長凳上休息。","hl":"bench"},{"id":"房屋與居住設備||chair","en":"chair","zh":"椅子","pos":"","ex":"Pull up a chair and join us.","exZh":"拉把椅子過來加入我們。","hl":"chair"},{"id":"房屋與居住設備||desk","en":"desk","zh":"書桌","pos":"","ex":"I put my computer on the desk.","exZh":"我把電腦放在書桌上。","hl":"desk"},{"id":"房屋與居住設備||couch","en":"couch","zh":"長沙發 (複數 -es)","pos":"","ex":"Grandpa is very lazy and always lies on the couch watching TV.","exZh":"爺爺很懶，總是躺在長沙發上看電視。","hl":"couch"},{"id":"房屋與居住設備||drawer","en":"drawer","zh":"抽屜","pos":"","ex":"I put my notebooks in the drawer.","exZh":"我把筆記本放在抽屜裡。","hl":"drawer"},{"id":"房屋與居住設備||lamp","en":"lamp","zh":"檯燈","pos":"","ex":"I need a lamp to read in the dark.","exZh":"在黑暗中讀書我需要一盞檯燈。","hl":"lamp"},{"id":"房屋與居住設備||light","en":"light","zh":"燈；光","pos":"","ex":"The power was cut off, so people used candles for light.","exZh":"停電了，所以人們用蠟燭當光源。","hl":"light"},{"id":"房屋與居住設備||sofa","en":"sofa","zh":"沙發","pos":"","ex":"This sofa is very comfortable to sit on.","exZh":"這張沙發坐起來很舒服。","hl":"sofa"},{"id":"房屋與居住設備||table","en":"table","zh":"餐桌","pos":"","ex":"Please set the table for dinner.","exZh":"請擺好餐具準備吃晚餐。","hl":"table"},{"id":"房屋與居住設備||tub","en":"tub","zh":"浴盆","pos":"","ex":"I enjoy taking a bath in a tub better than taking a shower.","exZh":"我覺得泡澡比淋浴更舒服。","hl":"tub"},{"id":"房屋與居住設備||blanket","en":"blanket","zh":"毛毯","pos":"","ex":"I feel cold. Would you get a blanket for me?","exZh":"我覺得冷。你可以幫我拿條毛毯嗎？","hl":"blanket"},{"id":"房屋與居住設備||towel","en":"towel","zh":"毛巾","pos":"","ex":"After taking a bath, I dried my body with a towel.","exZh":"洗完澡後，我用毛巾擦乾身體。","hl":"towel"},{"id":"房屋與居住設備||cellphone","en":"cellphone","zh":"手機","pos":"","ex":"Don't play with your cellphone while you are eating.","exZh":"吃飯時不要玩手機。","hl":"cellphone"},{"id":"房屋與居住設備||computer","en":"computer","zh":"電腦","pos":"","ex":"I use the computer to do my homework.","exZh":"我用電腦寫作業。","hl":"computer"},{"id":"房屋與居住設備||camera","en":"camera","zh":"照相機","pos":"","ex":"We should take a camera with us for the trip.","exZh":"旅行時我們應該隨身帶台相機。","hl":"camera"},{"id":"房屋與居住設備||machine","en":"machine","zh":"機器","pos":"","ex":"Let's go to the museum to watch the old machines.","exZh":"我們去博物館看看舊機器吧。","hl":"machines"},{"id":"房屋與居住設備||radio","en":"radio","zh":"收音機","pos":"","ex":"My grandfather likes to listen to the radio.","exZh":"我爺爺喜歡聽收音機。","hl":"radio"},{"id":"房屋與居住設備||fan","en":"fan","zh":"電扇；扇子","pos":"","ex":"It's very hot. Please turn on the fan.","exZh":"天氣很熱，請打開電扇。","hl":"fan"},{"id":"房屋與居住設備||tape","en":"tape","zh":"錄音帶；膠帶","pos":"","ex":"We used tape to fix the broken box.","exZh":"我們用膠帶修補壞掉的箱子。","hl":"tape"},{"id":"房屋與居住設備||tape recorder","en":"tape recorder","zh":"錄音機","pos":"","ex":"In the past, people used tape recorders to record music.","exZh":"以前人們用錄音機錄音樂。","hl":"tape recorders"},{"id":"房屋與居住設備||telephone / phone","en":"telephone / phone","zh":"電話","pos":"","ex":"The telephone is ringing. Can you answer it?","exZh":"電話在響。你能接一下嗎？","hl":"telephone"},{"id":"房屋與居住設備||refrigerator / fridge","en":"refrigerator / fridge","zh":"冰箱","pos":"","ex":"People keep food in the refrigerator to keep it fresh.","exZh":"人們把食物冰在冰箱裡以保持新鮮。","hl":"refrigerator"},{"id":"房屋與居住設備||television / tv","en":"television / TV","zh":"電視","pos":"","ex":"My brother spends too much time watching television.","exZh":"我弟花太多時間看電視了。","hl":"television"},{"id":"房屋與居住設備||video","en":"video","zh":"錄影帶","pos":"","ex":"We watched an interesting video about space.","exZh":"我們看了一段關於太空的有趣影片。","hl":"video"},{"id":"房屋與居住設備||basket","en":"basket","zh":"籃子","pos":"","ex":"She put all the apples into a basket.","exZh":"她把所有蘋果放進籃子裡。","hl":"basket"},{"id":"房屋與居住設備||bell","en":"bell","zh":"鈴；鐘","pos":"","ex":"Let's ring the door bell first.","exZh":"我們先按門鈴吧。","hl":"door bell"},{"id":"房屋與居住設備||box","en":"box","zh":"盒子","pos":"","ex":"I put my old toys in a large box.","exZh":"我把舊玩具放在一個大盒子裡。","hl":"box"},{"id":"房屋與居住設備||candle","en":"candle","zh":"蠟燭","pos":"","ex":"We lit some candles during the power cut.","exZh":"停電期間我們點了一些蠟燭。","hl":"candles"},{"id":"房屋與居住設備||garbage / trash","en":"garbage / trash","zh":"垃圾","pos":"","ex":"I usually take all the garbage out to the trash truck.","exZh":"我通常會把所有垃圾拿到垃圾車丟。","hl":"garbage"},{"id":"房屋與居住設備||mat","en":"mat","zh":"蓆；墊","pos":"","ex":"Please wipe your feet on the mat.","exZh":"請在墊子上擦擦腳。","hl":"mat"},{"id":"房屋與居住設備||gas","en":"gas","zh":"瓦斯","pos":"","ex":"Don't forget to turn off the gas before you go out.","exZh":"出門前別忘了關瓦斯。","hl":"gas"},{"id":"房屋與居住設備||key","en":"key","zh":"鑰匙","pos":"","ex":"I can't find the key to my room.","exZh":"我找不到房間的鑰匙。","hl":"key"},{"id":"房屋與居住設備||build","en":"build","zh":"建造 (過去式 built)","pos":"","ex":"They built a new bridge over the river.","exZh":"他們在河上造了一座新橋。","hl":"built"},{"id":"房屋與居住設備||clean","en":"clean","zh":"清理","pos":"","ex":"After dinner, I help clean the kitchen.","exZh":"晚餐後，我幫忙清理廚房。","hl":"clean"},{"id":"房屋與居住設備||fix","en":"fix","zh":"修理","pos":"","ex":"Don't worry! I can fix the broken radio for you.","exZh":"別擔心！我可以幫你修理壞掉的收音機。","hl":"fix"},{"id":"房屋與居住設備||mop","en":"mop","zh":"拖 (過去式 mopped)","pos":"","ex":"The woman is mopping the floor now.","exZh":"那個女人正在拖地。","hl":"mopping"},{"id":"房屋與居住設備||ring","en":"ring","zh":"響；按鈴 (過去式 rang)","pos":"","ex":"The doorbell rang, but no one was at the door.","exZh":"電鈴響了，但門口沒人。","hl":"rang"},{"id":"房屋與居住設備||wash","en":"wash","zh":"洗","pos":"","ex":"You should wash your hands before you eat.","exZh":"你吃飯前應該要洗手。","hl":"wash"}]},{"id":"運動、興趣與嗜好","name":"運動、興趣與嗜好","words":[{"id":"運動、興趣與嗜好||sports","en":"sports","zh":"運動","pos":"","ex":"I enjoy playing all kinds of sports.","exZh":"我喜歡各種運動。","hl":"sports"},{"id":"運動、興趣與嗜好||badminton","en":"badminton","zh":"羽毛球","pos":"","ex":"We often play badminton in the gym after school.","exZh":"我們放學後常在體育館打羽毛球。","hl":"badminton"},{"id":"運動、興趣與嗜好||baseball","en":"baseball","zh":"棒球","pos":"","ex":"Mike is a good baseball player. He can run and hit a ball well.","exZh":"Mike 是一個棒球好手。他很會跑也很會打球。","hl":""},{"id":"運動、興趣與嗜好||basketball","en":"basketball","zh":"籃球","pos":"","ex":"Our school team won the basketball game last week.","exZh":"我們校隊上週贏了籃球賽。","hl":"basketball"},{"id":"運動、興趣與嗜好||dodge ball","en":"dodge ball","zh":"躲避球","pos":"","ex":"Dodge ball is a popular sport in elementary school.","exZh":"躲避球是小學很受歡迎的運動。","hl":"Dodge ball"},{"id":"運動、興趣與嗜好||frisbee","en":"frisbee","zh":"飛盤","pos":"","ex":"Look at the picture. They are playing frisbee in the sea.","exZh":"看這張圖。他們在海裡玩飛盤。","hl":"frisbee"},{"id":"運動、興趣與嗜好||soccer","en":"soccer","zh":"足球","pos":"","ex":"Millions of people around the world love to play soccer.","exZh":"全世界有數百萬人喜愛踢足球。","hl":"soccer"},{"id":"運動、興趣與嗜好||tennis","en":"tennis","zh":"網球","pos":"","ex":"I enjoy playing tennis with my friends on weekends.","exZh":"我喜歡週末跟朋友打網球。","hl":"tennis"},{"id":"運動、興趣與嗜好||race","en":"race","zh":"賽跑","pos":"","ex":"Who won the 100-meter race?","exZh":"誰贏了百米賽跑？","hl":"race"},{"id":"運動、興趣與嗜好||barbecue","en":"barbecue","zh":"烤肉","pos":"","ex":"We had a barbecue in the yard on Mid-Autumn Festival.","exZh":"中秋節我們在院子裡烤肉。","hl":"barbecue"},{"id":"運動、興趣與嗜好||camp / camping","en":"camp / camping","zh":"露營","pos":"","ex":"Students can learn how to live in nature by going camping.","exZh":"學生可以透過露營學習如何在自然中生活。","hl":"camping"},{"id":"運動、興趣與嗜好||cook / cooking","en":"cook / cooking","zh":"烹調","pos":"","ex":"My brother's hobby is cooking. He can make great pasta.","exZh":"我弟的嗜好是下廚，他能做出很棒的義大利麵。","hl":"cooking"},{"id":"運動、興趣與嗜好||dance / dancing","en":"dance / dancing","zh":"跳舞","pos":"","ex":"Many young people like dancing along with Hip-Hop music.","exZh":"許多青少年喜歡隨著嘻哈音樂跳舞。","hl":"dancing"},{"id":"運動、興趣與嗜好||exercise","en":"exercise","zh":"運動","pos":"","ex":"Regular exercise makes me keep healthy.","exZh":"規律的運動讓我保持健康。","hl":"exercise"},{"id":"運動、興趣與嗜好||fish / fishing","en":"fish / fishing","zh":"釣魚","pos":"","ex":"My father likes to go fishing at the beach.","exZh":"我爸爸喜歡去海邊釣魚。","hl":"fishing"},{"id":"運動、興趣與嗜好||hike / hiking","en":"hike / hiking","zh":"健行","pos":"","ex":"We go hiking in the mountains every weekend.","exZh":"我們每個週末都去山裡健行。","hl":"hiking"},{"id":"運動、興趣與嗜好||jog / jogging","en":"jog / jogging","zh":"慢跑","pos":"","ex":"I go jogging for thirty minutes every morning.","exZh":"我每天早上慢跑三十分鐘。","hl":"jogging"},{"id":"運動、興趣與嗜好||roller skate / blade","en":"roller skate / blade","zh":"滑輪溜冰","pos":"","ex":"The children are playing with their roller skates.","exZh":"孩子們正在玩他們的滑輪鞋。","hl":"roller skates"},{"id":"運動、興趣與嗜好||skate / skating","en":"skate / skating","zh":"溜冰","pos":"","ex":"We went ice skating at the mall yesterday.","exZh":"我們昨天去購物中心溜冰。","hl":"skating"},{"id":"運動、興趣與嗜好||mountain climbing","en":"mountain climbing","zh":"爬山","pos":"","ex":"Mountain climbing is a challenging but fun activity.","exZh":"爬山是一項有挑戰性但有趣的活動。","hl":"Mountain climbing"},{"id":"運動、興趣與嗜好||sail / sailing","en":"sail / sailing","zh":"航行","pos":"","ex":"He wants to take a trip to many countries by sailing.","exZh":"他想透過航行去許多國家旅行。","hl":"sailing"},{"id":"運動、興趣與嗜好||run / running","en":"run / running","zh":"跑步","pos":"","ex":"Running is a simple way to stay fit.","exZh":"跑步是保持健康的一個簡單方法。","hl":"Running"},{"id":"運動、興趣與嗜好||sing / singing","en":"sing / singing","zh":"唱歌","pos":"","ex":"Jay is a popular singer, and he likes singing for his fans.","exZh":"周杰倫是位受歡迎的歌手，他喜歡為歌迷唱歌。","hl":"singing"},{"id":"運動、興趣與嗜好||swim / swimming","en":"swim / swimming","zh":"游泳","pos":"","ex":"I joined the swimming team when I was in elementary school.","exZh":"我小學時加入了游泳隊。","hl":"swimming"},{"id":"運動、興趣與嗜好||surf / surfing","en":"surf / surfing","zh":"衝浪；上網","pos":"","ex":"People like to surf the internet to find information.","exZh":"人們喜歡上網搜尋資訊。","hl":"surf"},{"id":"運動、興趣與嗜好||draw / drawing","en":"draw / drawing","zh":"繪畫","pos":"","ex":"She is good at drawing flowers.","exZh":"她擅長畫花。","hl":"drawing"},{"id":"運動、興趣與嗜好||paint / painting","en":"paint / painting","zh":"彩繪；油漆","pos":"","ex":"He is painting a beautiful picture of the ocean.","exZh":"他正在畫一幅美麗的大海圖畫。","hl":"painting"},{"id":"運動、興趣與嗜好||trip","en":"trip","zh":"旅行","pos":"","ex":"I enjoyed the trip to Hualien very much.","exZh":"我非常享受去花蓮的旅行。","hl":"trip"},{"id":"運動、興趣與嗜好||hobby","en":"hobby","zh":"嗜好","pos":"","ex":"John has a special hobby. He likes to collect all kinds of robots.","exZh":"John 有個特別的嗜好。他喜歡收集各種機器人。","hl":"hobby"},{"id":"運動、興趣與嗜好||band","en":"band","zh":"樂團","pos":"","ex":"My brother plays the guitar in a rock band.","exZh":"我弟在一個搖滾樂團裡彈吉他。","hl":"band"},{"id":"運動、興趣與嗜好||card","en":"card","zh":"卡片","pos":"","ex":"I sent a birthday card to my best friend.","exZh":"我寄了一張生日卡片給我最好的朋友。","hl":"card"},{"id":"運動、興趣與嗜好||chess","en":"chess","zh":"西洋棋","pos":"","ex":"Playing chess helps me think more clearly.","exZh":"下西洋棋幫助我思考更清晰。","hl":"chess"},{"id":"運動、興趣與嗜好||comic","en":"comic","zh":"漫畫","pos":"","ex":"I like to read the comics in the newspaper; they make me laugh.","exZh":"我喜歡看報紙上的漫畫；它們讓我開懷大笑。","hl":"comics"},{"id":"運動、興趣與嗜好||computer game","en":"computer game","zh":"電腦遊戲","pos":"","ex":"Many students enjoy playing computer games after school.","exZh":"許多學生放學後喜歡玩電腦遊戲。","hl":"computer games"},{"id":"運動、興趣與嗜好||newspaper","en":"newspaper","zh":"報紙","pos":"","ex":"My grandfather reads the newspaper every morning.","exZh":"我爺爺每天早上讀報紙。","hl":"newspaper"},{"id":"運動、興趣與嗜好||doll","en":"doll","zh":"洋娃娃","pos":"","ex":"My sister has a large collection of dolls.","exZh":"我妹妹收集了很多洋娃娃。","hl":"dolls"},{"id":"運動、興趣與嗜好||robot","en":"robot","zh":"機器人","pos":"","ex":"John likes to collect all kinds of robots.","exZh":"John 喜歡收集各種機器人。","hl":"robots"},{"id":"運動、興趣與嗜好||game","en":"game","zh":"遊戲","pos":"","ex":"Let's play a board game together.","exZh":"我們一起玩桌遊吧。","hl":"game"},{"id":"運動、興趣與嗜好||internet","en":"internet","zh":"網路","pos":"","ex":"You can find almost everything on the internet.","exZh":"你幾乎可以在網路上找到任何東西。","hl":"internet"},{"id":"運動、興趣與嗜好||movie","en":"movie","zh":"電影","pos":"","ex":"Would you like to go to a movie with me tonight?","exZh":"你今晚想跟我一起去看電影嗎？","hl":"movie"},{"id":"運動、興趣與嗜好||stamp","en":"stamp","zh":"郵票","pos":"","ex":"You have to put a stamp on the envelope to mail it.","exZh":"你得在信封上貼郵票才能寄出。","hl":"stamp"},{"id":"運動、興趣與嗜好||story","en":"story","zh":"故事 (複數 -ies)","pos":"","ex":"My grandmother tells me a bedtime story every night.","exZh":"我奶奶每天晚上都會講床邊故事給我聽。","hl":"story"},{"id":"運動、興趣與嗜好||team","en":"team","zh":"球隊","pos":"","ex":"Our team practiced hard for the game.","exZh":"我們的球隊為了比賽辛苦練習。","hl":"team"},{"id":"運動、興趣與嗜好||club","en":"club","zh":"俱樂部；社團","pos":"","ex":"I joined the music club at school.","exZh":"我加入了學校的音樂社團。","hl":"club"},{"id":"運動、興趣與嗜好||toy","en":"toy","zh":"玩具","pos":"","ex":"The floor is covered with children's toys.","exZh":"地板上到處都是小孩子的玩具。","hl":"toys"},{"id":"運動、興趣與嗜好||music","en":"music","zh":"音樂","pos":"","ex":"I like to listen to pop music when I'm studying.","exZh":"我讀書時喜歡聽流行音樂。","hl":"music"},{"id":"運動、興趣與嗜好||drum","en":"drum","zh":"鼓","pos":"","ex":"He plays the drums very loudly.","exZh":"他鼓打得很大聲。","hl":"drums"},{"id":"運動、興趣與嗜好||flute","en":"flute","zh":"長笛","pos":"","ex":"She learned how to play the flute when she was ten.","exZh":"她十歲時學會了吹長笛。","hl":"flute"},{"id":"運動、興趣與嗜好||guitar","en":"guitar","zh":"吉他","pos":"","ex":"Jay is a singer, and he has his own guitar to play music.","exZh":"周杰倫是位歌手，他有自己的吉他來演奏音樂。","hl":"music"},{"id":"運動、興趣與嗜好||piano","en":"piano","zh":"鋼琴","pos":"","ex":"Jean plays the piano much better than before.","exZh":"Jean 鋼琴彈得比以前好多了。","hl":"piano"},{"id":"運動、興趣與嗜好||violin","en":"violin","zh":"小提琴","pos":"","ex":"The violin sounds very beautiful.","exZh":"小提琴的聲音非常美。","hl":"violin"},{"id":"運動、興趣與嗜好||cheer","en":"cheer","zh":"喝采","pos":"","ex":"The crowd cheered for the winning team.","exZh":"群眾為獲勝的隊伍喝采。","hl":"cheered"},{"id":"運動、興趣與嗜好||lose","en":"lose","zh":"輸；失去 (過去式 lost)","pos":"","ex":"We were all sad because our favorite team lost the game.","exZh":"我們都很難過，因為我們最愛的球隊輸了比賽。","hl":"lost"},{"id":"運動、興趣與嗜好||play","en":"play","zh":"玩；演奏","pos":"","ex":"He likes to play basketball with his friends.","exZh":"他喜歡跟朋友一起打籃球。","hl":"play"},{"id":"運動、興趣與嗜好||win","en":"win","zh":"獲勝 (過去式 won)","pos":"","ex":"Our team won the game yesterday.","exZh":"我們的球隊昨天贏了比賽。","hl":"won"},{"id":"運動、興趣與嗜好||fun","en":"fun","zh":"樂趣","pos":"","ex":"We had a lot of fun at the party.","exZh":"我們在派對上玩得很開心。","hl":"fun"},{"id":"運動、興趣與嗜好||joy","en":"joy","zh":"樂趣；喜悅","pos":"","ex":"Playing sports brings me a lot of joy.","exZh":"運動帶給我很多喜悅。","hl":"joy"}]},{"id":"職業","name":"職業","words":[{"id":"職業||actor","en":"actor","zh":"演員","pos":"","ex":"The famous actor is filming a new movie.","exZh":"那位著名的演員正在拍一部新電影。","hl":""},{"id":"職業||actress","en":"actress","zh":"女演員","pos":"","ex":"She is a very talented actress in Taiwan.","exZh":"她是臺灣一位非常有才華的女演員。","hl":""},{"id":"職業||boss","en":"boss","zh":"老板","pos":"","ex":"Mark is the boss of the store; he is in charge.","exZh":"Mark 是這家店的老闆；由他負責。","hl":""},{"id":"職業||businessman","en":"businessman","zh":"商人","pos":"","ex":"My uncle is a businessman; he runs a coffee shop.","exZh":"我叔叔是個商人；他經營一家咖啡店。","hl":""},{"id":"職業||clerk","en":"clerk","zh":"店員","pos":"","ex":"The clerk was very helpful and polite.","exZh":"那位店員非常幫忙且有禮貌。","hl":""},{"id":"職業||cook","en":"cook","zh":"廚師","pos":"","ex":"The cook prepared a delicious meal for us.","exZh":"廚師為我們準備了一頓美味的餐點。","hl":""},{"id":"職業||dentist","en":"dentist","zh":"牙醫","pos":"","ex":"I went to see a dentist because my tooth hurt.","exZh":"因為我牙齒痛，所以我去看牙醫。","hl":""},{"id":"職業||doctor","en":"doctor","zh":"醫生","pos":"","ex":"You should see a doctor if you feel sick.","exZh":"如果你覺得不舒服，應該去看醫生。","hl":""},{"id":"職業||driver","en":"driver","zh":"司機","pos":"","ex":"The bus driver stopped the bus to let us get off.","exZh":"公車司機停下車讓我們下車。","hl":""},{"id":"職業||engineer","en":"engineer","zh":"工程師","pos":"","ex":"My brother wants to be an engineer in the future.","exZh":"我哥哥未來想成為一名工程師。","hl":""},{"id":"職業||farmer","en":"farmer","zh":"農夫","pos":"","ex":"The farmer is working hard in the fields.","exZh":"農夫正在田裡辛苦地工作。","hl":""},{"id":"職業||fisherman","en":"fisherman","zh":"漁夫 (複數 -men)","pos":"","ex":"Denny works as a fisherman; he goes out on the sea.","exZh":"Denny 的職業是漁夫；他會出海捕魚。","hl":""},{"id":"職業||housewife","en":"housewife","zh":"家管 (複數 -wives)","pos":"","ex":"My mother is a housewife who takes care of us.","exZh":"我媽媽是一位照顧我們的家庭主婦。","hl":""},{"id":"職業||lawyer","en":"lawyer","zh":"律師","pos":"","ex":"He needs a lawyer to help him with the case.","exZh":"他需要一位律師來幫他處理這個案子。","hl":""},{"id":"職業||mail carrier","en":"mail carrier","zh":"郵差","pos":"","ex":"A mail carrier is a man whose job is to send letters.","exZh":"郵差是一個負責寄送信件的人。","hl":""},{"id":"職業||nurse","en":"nurse","zh":"護士","pos":"","ex":"John's sister is a nurse, who takes care of the sick.","exZh":"John 的姊姊是一名護士，負責照顧病人。","hl":""},{"id":"職業||police officer","en":"police officer","zh":"警官","pos":"","ex":"The police officer caught the thief yesterday.","exZh":"警官昨天抓到了那個小偷。","hl":""},{"id":"職業||reporter","en":"reporter","zh":"記者","pos":"","ex":"The reporter is interviewing the famous singer.","exZh":"記者正在訪問那位著名的歌手。","hl":""},{"id":"職業||salesman","en":"salesman","zh":"推銷員 (複數 -men)","pos":"","ex":"He works as a salesman for a car company.","exZh":"他在一家汽車公司擔任推銷員。","hl":""},{"id":"職業||shopkeeper","en":"shopkeeper","zh":"店主","pos":"","ex":"The shopkeeper opened the store early this morning.","exZh":"店主今天一早便開門營業。","hl":""},{"id":"職業||secretary","en":"secretary","zh":"秘書 (複數 -aries)","pos":"","ex":"The secretary is busy typing reports.","exZh":"秘書正忙著打報告。","hl":""},{"id":"職業||singer","en":"singer","zh":"歌星","pos":"","ex":"Jay Chou is a very famous singer in Asia.","exZh":"周杰倫在亞洲是位非常著名的歌手。","hl":""},{"id":"職業||soldier","en":"soldier","zh":"士兵","pos":"","ex":"The soldiers are trained to protect the country.","exZh":"士兵們接受訓練以保護國家。","hl":""},{"id":"職業||student","en":"student","zh":"學生","pos":"","ex":"John is a school student who tries to get a job.","exZh":"John 是一名試著找工作的學生。","hl":""},{"id":"職業||teacher","en":"teacher","zh":"老師","pos":"","ex":"My English teacher is very kind and patient.","exZh":"我的英文老師非常親切且有耐心。","hl":""},{"id":"職業||waiter","en":"waiter","zh":"男服務生","pos":"","ex":"The waiter brought us the menu and water.","exZh":"男服務生幫我們送上菜單和水。","hl":""},{"id":"職業||waitress","en":"waitress","zh":"女服務生","pos":"","ex":"The waitress is serving food to the customers.","exZh":"女服務生正送餐給顧客。","hl":""},{"id":"職業||worker","en":"worker","zh":"工人","pos":"","ex":"The workers are building a new road.","exZh":"工人們正在修築一條新路。","hl":""},{"id":"職業||writer","en":"writer","zh":"作家","pos":"","ex":"J.K. Rowling is a world-famous writer.","exZh":"J.K. 羅琳是位世界知名的作家。","hl":""},{"id":"職業||business","en":"business","zh":"生意","pos":"","ex":"It is not easy to do business these days.","exZh":"最近做生意不容易。","hl":""},{"id":"職業||experience","en":"experience","zh":"經驗 (名詞/動詞)","pos":"","ex":"He tries to get some experience from a summer job.","exZh":"他試著從暑期工作中獲得一些經驗。","hl":""},{"id":"職業||job","en":"job","zh":"工作；職業","pos":"","ex":"Finding a good job is very important.","exZh":"找到一份好工作非常重要。","hl":""},{"id":"職業||work","en":"work","zh":"工作","pos":"","ex":"I have a lot of work to do today.","exZh":"我今天有很多工作要做。","hl":""},{"id":"職業||what do you do?","en":"What do you do?","zh":"你的職業是什麼？","pos":"精析：詢問職業","ex":"What do you do? I am a lawyer.","exZh":"","hl":""}]},{"id":"天氣與自然界","name":"天氣與自然界","words":[{"id":"天氣與自然界||weather","en":"weather","zh":"天氣","pos":"","ex":"The weather in Taipei is often rainy.","exZh":"臺北的天氣經常下雨。","hl":""},{"id":"天氣與自然界||clear","en":"clear","zh":"晴朗的","pos":"","ex":"It's a clear day; we can see the mountains.","exZh":"天氣很晴朗；我們可以看到山。","hl":""},{"id":"天氣與自然界||cloudy","en":"cloudy","zh":"多雲的","pos":"","ex":"It is a cloudy day, so it's not very hot.","exZh":"今天是多雲的天氣，所以不會很熱。","hl":""},{"id":"天氣與自然界||cold","en":"cold","zh":"寒冷的","pos":"","ex":"Remember to wear a coat; it's cold outside.","exZh":"記得穿外套；外面很冷。","hl":""},{"id":"天氣與自然界||cool","en":"cool","zh":"涼爽的","pos":"","ex":"The autumn breeze feels very cool and nice.","exZh":"秋天的微風感覺非常涼爽舒服。","hl":""},{"id":"天氣與自然界||dry","en":"dry","zh":"乾燥的","pos":"","ex":"The air in the room is too dry.","exZh":"房間裡的空氣太乾燥了。","hl":""},{"id":"天氣與自然界||hot","en":"hot","zh":"炎熱的","pos":"","ex":"It's very hot in summer in Taiwan.","exZh":"臺灣的夏天非常炎熱。","hl":""},{"id":"天氣與自然界||rainy","en":"rainy","zh":"下雨的","pos":"","ex":"We had a rainy week and couldn't go out.","exZh":"我們經歷了下雨的一週，沒辦法出門。","hl":""},{"id":"天氣與自然界||snowy","en":"snowy","zh":"下雪的","pos":"","ex":"They live in a snowy area during winter.","exZh":"他們冬天住在會下雪的地區。","hl":""},{"id":"天氣與自然界||sunny","en":"sunny","zh":"晴朗的","pos":"","ex":"Let's go for a picnic on this sunny day.","exZh":"趁著這晴朗的日子，我們去野餐吧。","hl":""},{"id":"天氣與自然界||warm","en":"warm","zh":"溫暖的","pos":"","ex":"The sun feels warm on my face.","exZh":"太陽照在臉上感覺很溫暖。","hl":""},{"id":"天氣與自然界||wet","en":"wet","zh":"潮濕的","pos":"","ex":"Don't sit on the grass; it's still wet.","exZh":"別坐在草地上；它還是濕的。","hl":""},{"id":"天氣與自然界||windy","en":"windy","zh":"風大的","pos":"","ex":"Hold onto your hat; it's very windy outside.","exZh":"拿好你的帽子；外面風很大。","hl":""},{"id":"天氣與自然界||rainbow","en":"rainbow","zh":"彩虹","pos":"","ex":"A beautiful rainbow appeared after the rain.","exZh":"雨後出現了一道美麗的彩虹。","hl":""},{"id":"天氣與自然界||snow","en":"snow","zh":"雪；下雪","pos":"","ex":"Does it snow on Hehuanshan in winter?","exZh":"合歡山冬天會下雪嗎？","hl":""},{"id":"天氣與自然界||snowman","en":"snowman","zh":"雪人","pos":"","ex":"The children are building a snowman in the yard.","exZh":"孩子們正在院子裡堆雪人。","hl":""},{"id":"天氣與自然界||typhoon","en":"typhoon","zh":"颱風","pos":"","ex":"A strong typhoon is coming to Taiwan this weekend.","exZh":"這週末有一個強烈颱風要來臺灣。","hl":""},{"id":"天氣與自然界||wind","en":"wind","zh":"風","pos":"","ex":"The strong wind blew down many trees.","exZh":"強風吹倒了許多樹木。","hl":""},{"id":"天氣與自然界||rain","en":"rain","zh":"雨；下雨","pos":"","ex":"We need more rain for the farmers' crops.","exZh":"我們需要更多雨水來灌溉農作物。","hl":""},{"id":"天氣與自然界||blow","en":"blow","zh":"吹 (過去式 blew)","pos":"","ex":"The wind blew my umbrella away.","exZh":"風把我的雨傘吹走了。","hl":""},{"id":"天氣與自然界||shine","en":"shine","zh":"照耀 (過去式 shone)","pos":"","ex":"The sun shone brightly all day long.","exZh":"太陽整天燦爛地照耀著。","hl":""},{"id":"天氣與自然界||nature","en":"nature","zh":"自然","pos":"","ex":"We should protect nature and keep the earth clean.","exZh":"我們應該保護自然並保持地球乾淨。","hl":""},{"id":"天氣與自然界||air","en":"air","zh":"空氣","pos":"","ex":"The air in the mountains is very fresh.","exZh":"山上的空氣非常清新。","hl":""},{"id":"天氣與自然界||earth","en":"earth","zh":"地球","pos":"","ex":"We must take good care of our earth.","exZh":"我們必須好好照顧我們的地球。","hl":""},{"id":"天氣與自然界||moon","en":"moon","zh":"月亮","pos":"","ex":"The moon is very bright tonight.","exZh":"今晚月亮很亮。","hl":""},{"id":"天氣與自然界||sky","en":"sky","zh":"天空","pos":"","ex":"Look at the stars in the dark sky.","exZh":"看看黑夜天空中的星星。","hl":""},{"id":"天氣與自然界||sun","en":"sun","zh":"太陽","pos":"","ex":"The sun rises in the east every morning.","exZh":"太陽每天早晨從東方升起。","hl":""},{"id":"天氣與自然界||star","en":"star","zh":"星星","pos":"","ex":"I like watching the stars at night.","exZh":"我喜歡在晚上看星星。","hl":""},{"id":"天氣與自然界||heat","en":"heat","zh":"熱度","pos":"","ex":"I can't stand the heat in the kitchen.","exZh":"我受不了廚房裡的熱氣。","hl":""}]},{"id":"地理","name":"地理","words":[{"id":"地理||bank","en":"bank","zh":"河岸","pos":"","ex":"We sat on the river bank and watched the sunset.","exZh":"我們坐在河岸邊看日落。","hl":""},{"id":"地理||beach","en":"beach","zh":"海灘","pos":"","ex":"Many people like to go to the beach in summer.","exZh":"夏天很多人喜歡去海灘。","hl":""},{"id":"地理||ground","en":"ground","zh":"地面","pos":"","ex":"Please don't throw trash on the ground.","exZh":"請不要把垃圾丟在地上。","hl":""},{"id":"地理||hill","en":"hill","zh":"小山丘","pos":"","ex":"They live in a small house on the hill.","exZh":"他們住在山丘上的小房子裡。","hl":""},{"id":"地理||island","en":"island","zh":"島嶼","pos":"","ex":"Taiwan is a beautiful island.","exZh":"臺灣是一個美麗的島嶼。","hl":""},{"id":"地理||lake","en":"lake","zh":"湖","pos":"","ex":"Sun Moon Lake is a famous place in Taiwan.","exZh":"日月潭是臺灣著名的景點。","hl":""},{"id":"地理||land","en":"land","zh":"土地","pos":"","ex":"The farmer bought some land to plant rice.","exZh":"農夫買了一些土地來種稻子。","hl":""},{"id":"地理||mountain","en":"mountain","zh":"山","pos":"","ex":"They are climbing the mountain this morning.","exZh":"他們今天早上正在爬山。","hl":""},{"id":"地理||pond","en":"pond","zh":"池塘","pos":"","ex":"There are many frogs in the small pond.","exZh":"那個小池塘裡有很多青蛙。","hl":""},{"id":"地理||pool","en":"pool","zh":"池塘；游泳池","pos":"","ex":"The children are swimming in the pool.","exZh":"孩子們正在游泳池裡游泳。","hl":""},{"id":"地理||river","en":"river","zh":"河流","pos":"","ex":"The Love River is a famous place in Kaohsiung.","exZh":"愛河是高雄著名的景點。","hl":""},{"id":"地理||sea","en":"sea","zh":"海","pos":"","ex":"They went out on the sea to catch fish.","exZh":"他們出海去捕魚。","hl":""},{"id":"地理||spring","en":"spring","zh":"泉源","pos":"","ex":"We found a natural spring in the woods.","exZh":"我們在森林裡發現了一個天然泉源。","hl":""},{"id":"地理||flower","en":"flower","zh":"花","pos":"","ex":"My grandmother likes to plant flowers.","exZh":"我奶奶喜歡種花。","hl":""},{"id":"地理||grass","en":"grass","zh":"草；草地","pos":"","ex":"Don't walk on the grass in the park.","exZh":"不要走在公園的草地上。","hl":""},{"id":"地理||tree","en":"tree","zh":"樹","pos":"","ex":"There are many old trees in the forest.","exZh":"森林裡有很多老樹。","hl":""},{"id":"地理||rose","en":"rose","zh":"玫瑰","pos":"","ex":"He gave a red rose to his girlfriend.","exZh":"他送給女朋友一朵紅玫瑰。","hl":""},{"id":"地理||rock","en":"rock","zh":"岩石","pos":"","ex":"We sat on a large rock by the river.","exZh":"我們坐在河邊的一塊大岩石上。","hl":""},{"id":"地理||mud","en":"mud","zh":"泥土","pos":"","ex":"My shoes are covered in mud after the rain.","exZh":"雨後我的鞋子沾滿了泥巴。","hl":""},{"id":"地理||plant","en":"plant","zh":"(名)植物 (動)種植","pos":"","ex":"We should plant more trees to save the earth.","exZh":"我們應該種更多樹來救地球。","hl":""}]},{"id":"動物與昆蟲","name":"動物與昆蟲","words":[{"id":"動物與昆蟲||animal","en":"animal","zh":"動物","pos":"","ex":"Dogs and cats are popular animals.","exZh":"狗和貓是受歡迎的動物。","hl":""},{"id":"動物與昆蟲||bear","en":"bear","zh":"熊","pos":"","ex":"The black bear lives in the mountains.","exZh":"黑熊住在山裡。","hl":""},{"id":"動物與昆蟲||cat","en":"cat","zh":"貓","pos":"","ex":"The cat is sleeping on the sofa.","exZh":"貓正睡在沙發上。","hl":""},{"id":"動物與昆蟲||chicken","en":"chicken","zh":"雞","pos":"","ex":"The farmer keeps many chickens.","exZh":"農夫養了很多雞。","hl":""},{"id":"動物與昆蟲||cow","en":"cow","zh":"母牛","pos":"","ex":"We get fresh milk from the cows.","exZh":"我們從母牛那裡得到新鮮牛奶。","hl":""},{"id":"動物與昆蟲||dog","en":"dog","zh":"狗","pos":"","ex":"The dog wagged its tail when it saw me.","exZh":"那隻狗看到我時搖了搖尾巴。","hl":""},{"id":"動物與昆蟲||duck","en":"duck","zh":"鴨子","pos":"","ex":"Some ducks are swimming in the pond.","exZh":"幾隻鴨子正在池塘裡游泳。","hl":""},{"id":"動物與昆蟲||elephant","en":"elephant","zh":"大象","pos":"","ex":"Elephants have very long trunks.","exZh":"大象有很長的鼻子。","hl":""},{"id":"動物與昆蟲||horse","en":"horse","zh":"馬","pos":"","ex":"He likes riding a horse on the farm.","exZh":"他喜歡在農場上騎馬。","hl":""},{"id":"動物與昆蟲||fox","en":"fox","zh":"狐狸 (複數 foxes)","pos":"","ex":"The clever fox escaped from the hunter.","exZh":"聰明的狐狸從獵人手中逃脫了。","hl":""},{"id":"動物與昆蟲||frog","en":"frog","zh":"青蛙","pos":"","ex":"I heard many frogs croaking last night.","exZh":"我昨晚聽到許多青蛙在叫。","hl":""},{"id":"動物與昆蟲||goat","en":"goat","zh":"山羊","pos":"","ex":"The goats are eating grass on the hill.","exZh":"山羊正在山丘上吃草。","hl":""},{"id":"動物與昆蟲||goose","en":"goose","zh":"鵝 (複數 geese)","pos":"","ex":"There are some geese swimming in the pond.","exZh":"有幾隻鵝正在池塘裡游泳。","hl":""},{"id":"動物與昆蟲||hen","en":"hen","zh":"母雞","pos":"","ex":"The hen is sitting on her eggs.","exZh":"母雞正坐在蛋上面。","hl":""},{"id":"動物與昆蟲||hippo","en":"hippo","zh":"河馬","pos":"","ex":"The hippos are staying in the water.","exZh":"河馬正待在水裡。","hl":""},{"id":"動物與昆蟲||kangaroo","en":"kangaroo","zh":"袋鼠","pos":"","ex":"Kangaroos are famous animals in Australia.","exZh":"袋鼠是澳洲著名的動物。","hl":""},{"id":"動物與昆蟲||koala","en":"koala","zh":"無尾熊","pos":"","ex":"The koala is sleeping on the tree.","exZh":"無尾熊正睡在樹上。","hl":""},{"id":"動物與昆蟲||lion","en":"lion","zh":"獅子","pos":"","ex":"The lion is known as the king of animals.","exZh":"獅子被稱為萬獸之王。","hl":""},{"id":"動物與昆蟲||monkey","en":"monkey","zh":"猴子","pos":"","ex":"The monkey is eating a banana.","exZh":"猴子正在吃香蕉。","hl":""},{"id":"動物與昆蟲||mouse","en":"mouse","zh":"老鼠 (複數 mice)","pos":"","ex":"The cat is trying to catch the small mice.","exZh":"那隻貓正試著抓那些小老鼠。","hl":""},{"id":"動物與昆蟲||ox","en":"ox","zh":"公牛 (複數 oxen)","pos":"","ex":"The farmer uses oxen to work in the fields.","exZh":"農夫使用公牛在田裡工作。","hl":""},{"id":"動物與昆蟲||pet","en":"pet","zh":"寵物","pos":"","ex":"Do you have any pets at home?","exZh":"你家裡有養寵物嗎？","hl":""},{"id":"動物與昆蟲||pig","en":"pig","zh":"豬","pos":"","ex":"The pigs are playing in the mud.","exZh":"豬群正在泥巴裡玩耍。","hl":""},{"id":"動物與昆蟲||puppy","en":"puppy","zh":"小狗 (複數 -pies)","pos":"","ex":"My dog just had four cute puppies.","exZh":"我的狗剛生了四隻可愛的小狗。","hl":""},{"id":"動物與昆蟲||rabbit","en":"rabbit","zh":"兔子","pos":"","ex":"The rabbit has long ears and a short tail.","exZh":"兔子有長耳朵和短尾巴。","hl":""},{"id":"動物與昆蟲||rat","en":"rat","zh":"鼠 (大的)","pos":"","ex":"A big rat ran across the kitchen floor.","exZh":"一隻大鼠跑過廚房地板。","hl":""},{"id":"動物與昆蟲||sheep","en":"sheep","zh":"綿羊 (單複數同形)","pos":"","ex":"We saw many sheep on the green hill.","exZh":"我們在綠色山丘上看到許多綿羊。","hl":""},{"id":"動物與昆蟲||tiger","en":"tiger","zh":"老虎","pos":"","ex":"The tiger is a very powerful animal.","exZh":"老虎是很有力量的動物。","hl":""},{"id":"動物與昆蟲||turkey","en":"turkey","zh":"火雞","pos":"","ex":"People eat turkey on Thanksgiving Day.","exZh":"人們在感恩節吃火雞。","hl":""},{"id":"動物與昆蟲||zebra","en":"zebra","zh":"斑馬","pos":"","ex":"Zebras have black and white stripes.","exZh":"斑馬有黑白相間的條紋。","hl":""},{"id":"動物與昆蟲||insect","en":"insect","zh":"昆蟲","pos":"","ex":"Ants and bees are common insects.","exZh":"螞蟻和蜜蜂是常見的昆蟲。","hl":""},{"id":"動物與昆蟲||ant","en":"ant","zh":"螞蟻","pos":"","ex":"Look! Many ants are carrying food.","exZh":"看！很多螞蟻正在搬運食物。","hl":""},{"id":"動物與昆蟲||bat","en":"bat","zh":"蝙蝠","pos":"","ex":"Bats usually come out at night.","exZh":"蝙蝠通常在晚上出來。","hl":""},{"id":"動物與昆蟲||bee","en":"bee","zh":"蜜蜂","pos":"","ex":"A group of bees attacked them.","exZh":"一群蜜蜂攻擊了他們。","hl":""},{"id":"動物與昆蟲||bird","en":"bird","zh":"鳥","pos":"","ex":"The bird hurt its wing and cannot fly.","exZh":"這隻鳥傷到了翅膀，不能飛。","hl":""},{"id":"動物與昆蟲||bug","en":"bug","zh":"臭蟲；昆蟲","pos":"","ex":"Don't worry; it's just a small bug.","exZh":"別擔心；那只是一隻小昆蟲。","hl":""},{"id":"動物與昆蟲||butterfly","en":"butterfly","zh":"蝴蝶 (複數 -flies)","pos":"","ex":"A beautiful butterfly is flying over the flowers.","exZh":"一隻美麗的蝴蝶正在花叢上飛舞。","hl":""},{"id":"動物與昆蟲||dragon","en":"dragon","zh":"龍","pos":"","ex":"Dragons are important in Chinese culture.","exZh":"龍在華人文化中很重要。","hl":""},{"id":"動物與昆蟲||snake","en":"snake","zh":"蛇","pos":"","ex":"I am very afraid of snakes.","exZh":"我非常怕蛇。","hl":""},{"id":"動物與昆蟲||spider","en":"spider","zh":"蜘蛛","pos":"","ex":"The spider is making a web.","exZh":"蜘蛛正在織網。","hl":""},{"id":"動物與昆蟲||fish","en":"fish","zh":"魚 (單複數同形)","pos":"","ex":"There are many colorful fish in the sea.","exZh":"海裡有很多色彩繽紛的魚。","hl":""},{"id":"動物與昆蟲||shark","en":"shark","zh":"鯊魚","pos":"","ex":"Sharks are the top hunters in the ocean.","exZh":"鯊魚是海洋中的頂尖獵人。","hl":""},{"id":"動物與昆蟲||turtle","en":"turtle","zh":"烏龜","pos":"","ex":"The sea turtle is an endangered animal.","exZh":"海龜是瀕臨絕種的動物。","hl":""},{"id":"動物與昆蟲||whale","en":"whale","zh":"鯨魚","pos":"","ex":"The blue whale is the largest animal.","exZh":"藍鯨是最大的動物。","hl":""},{"id":"動物與昆蟲||bite","en":"bite","zh":"咬 (過去式 bit)","pos":"","ex":"The dog bit the man on his leg.","exZh":"那隻狗咬了那個男人的腿。","hl":""},{"id":"動物與昆蟲||hunt","en":"hunt","zh":"打獵","pos":"","ex":"Long ago, people had to hunt for food.","exZh":"很久以前，人們必須打獵獲取食物。","hl":""},{"id":"動物與昆蟲||tail","en":"tail","zh":"尾巴","pos":"","ex":"The dog wagged its tail when it saw its master.","exZh":"那隻狗看到主人時搖了搖尾巴。","hl":""},{"id":"動物與昆蟲||cage","en":"cage","zh":"籠子","pos":"","ex":"Don't keep birds in a small cage.","exZh":"不要把鳥關在小籠子裡。","hl":""}]},{"id":"其他名詞","name":"其他名詞","words":[{"id":"其他名詞||action","en":"action","zh":"行動","pos":"","ex":"Actions speak louder than words.","exZh":"行動勝於言語。","hl":""},{"id":"其他名詞||base","en":"base","zh":"基礎","pos":"","ex":"You need a strong base to build a tall building.","exZh":"你需要強大的基礎來蓋高樓。","hl":""},{"id":"其他名詞||case","en":"case","zh":"事例；案例","pos":"","ex":"There are some cases of flu in the school.","exZh":"學校裡有一些流感的案例。","hl":""},{"id":"其他名詞||center","en":"center","zh":"中心","pos":"","ex":"The shopping center is in the middle of the city.","exZh":"購物中心在城市的中心。","hl":""},{"id":"其他名詞||chance","en":"chance","zh":"機會","pos":"","ex":"I hope I have a chance to study abroad.","exZh":"我希望有機會出國留學。","hl":""},{"id":"其他名詞||dream","en":"dream","zh":"夢想","pos":"","ex":"Her dream is to become a famous writer.","exZh":"她的夢想是成為一名著名的作家。","hl":""},{"id":"其他名詞||excuse","en":"excuse","zh":"藉口；原諒","pos":"","ex":"Stop making excuses for being late.","exZh":"別再為遲到找藉口了。","hl":""},{"id":"其他名詞||fact","en":"fact","zh":"事實","pos":"","ex":"It is a fact that the earth goes around the sun.","exZh":"地球繞著太陽轉是一個事實。","hl":""},{"id":"其他名詞||fire","en":"fire","zh":"火","pos":"","ex":"Don't play with fire; it's dangerous.","exZh":"不要玩火；那很危險。","hl":""},{"id":"其他名詞||ghost","en":"ghost","zh":"鬼","pos":"","ex":"He told us a scary ghost story last night.","exZh":"他昨晚給我們講了一個可怕的鬼故事。","hl":""},{"id":"其他名詞||group","en":"group","zh":"團體","pos":"","ex":"We worked in a group to finish the project.","exZh":"我們以小組形式工作來完成專案。","hl":""},{"id":"其他名詞||habit","en":"habit","zh":"習慣","pos":"","ex":"He has a good habit of reading before bed.","exZh":"他有睡前閱讀的好習慣。","hl":""},{"id":"其他名詞||honey","en":"honey","zh":"蜂蜜","pos":"","ex":"The honey is sweet and healthy.","exZh":"蜂蜜又甜又健康。","hl":""},{"id":"其他名詞||idea","en":"idea","zh":"主意","pos":"","ex":"That's a great idea! Let's do it.","exZh":"那是個好主意！我們做吧。","hl":""},{"id":"其他名詞||interview","en":"interview","zh":"面試；訪問","pos":"","ex":"I have a job interview tomorrow morning.","exZh":"我明天早上有一個工作面試。","hl":""},{"id":"其他名詞||lid","en":"lid","zh":"蓋子","pos":"","ex":"Please put the lid back on the pot.","exZh":"請把蓋子蓋回鍋子上。","hl":""},{"id":"其他名詞||mail","en":"mail","zh":"郵件","pos":"","ex":"Is there any mail for me today?","exZh":"今天有我的郵件嗎？","hl":""},{"id":"其他名詞||matter","en":"matter","zh":"事情","pos":"","ex":"What's the matter with your arm?","exZh":"你的手臂怎麼了？","hl":""},{"id":"其他名詞||mind","en":"mind","zh":"心智","pos":"","ex":"Keeping a positive mind is good for health.","exZh":"保持正向的心態對健康有益。","hl":""},{"id":"其他名詞||mistake","en":"mistake","zh":"錯誤","pos":"","ex":"Everyone makes mistakes sometimes.","exZh":"每個人有時都會犯錯。","hl":""},{"id":"其他名詞||news","en":"news","zh":"消息","pos":"","ex":"I have some good news for you.","exZh":"我有一些好消息要告訴你。","hl":""},{"id":"其他名詞||noise","en":"noise","zh":"噪音","pos":"","ex":"Stop making so much noise in the library.","exZh":"在圖書館裡別製造那麼多噪音。","hl":""},{"id":"其他名詞||note","en":"note","zh":"摘記","pos":"","ex":"She wrote a short note to her teacher.","exZh":"她寫了一張簡短的便條給老師。","hl":""},{"id":"其他名詞||party","en":"party","zh":"宴會","pos":"","ex":"We are going to a birthday party tonight.","exZh":"我們今晚要去參加生日派對。","hl":""},{"id":"其他名詞||photo","en":"photo","zh":"照片 (複數 photos)","pos":"","ex":"Can you take a photo for us?","exZh":"你能幫我們拍張照嗎？","hl":""},{"id":"其他名詞||pin","en":"pin","zh":"大頭針","pos":"","ex":"She used a pin to fix the broken dress.","exZh":"她用大頭針固定破掉的洋裝。","hl":""},{"id":"其他名詞||pipe","en":"pipe","zh":"水管","pos":"","ex":"The water pipe is broken and needs fixing.","exZh":"水管破了，需要修理。","hl":""},{"id":"其他名詞||planet","en":"planet","zh":"行星","pos":"","ex":"Earth is the third planet from the sun.","exZh":"地球是距離太陽第三遠的行星。","hl":""},{"id":"其他名詞||pleasure","en":"pleasure","zh":"快樂","pos":"","ex":"It's my pleasure to help you.","exZh":"幫助你是我的榮幸（快樂）。","hl":""},{"id":"其他名詞||prize","en":"prize","zh":"獎品","pos":"","ex":"He won the first prize in the race.","exZh":"他在比賽中贏得了第一名。","hl":""},{"id":"其他名詞||program","en":"program","zh":"節目","pos":"","ex":"My favorite TV program starts at 8 PM.","exZh":"我最喜歡的電視節目晚上八點開始。","hl":""},{"id":"其他名詞||rope","en":"rope","zh":"繩子","pos":"","ex":"They used a long rope to climb the wall.","exZh":"他們用一根長繩子爬牆。","hl":""},{"id":"其他名詞||sale","en":"sale","zh":"大拍賣","pos":"","ex":"The store is having a big sale this week.","exZh":"這家店這週正在進行大拍賣。","hl":""},{"id":"其他名詞||screen","en":"screen","zh":"螢幕","pos":"","ex":"The computer screen is a bit dirty.","exZh":"電腦螢幕有點髒。","hl":""},{"id":"其他名詞||seed","en":"seed","zh":"種子","pos":"","ex":"We planted some seeds in the garden.","exZh":"我們在花園裡種了一些種子。","hl":""},{"id":"其他名詞||sight","en":"sight","zh":"視覺","pos":"","ex":"He lost his sight in an accident.","exZh":"他在一次意外中失明了（失去視覺）。","hl":""},{"id":"其他名詞||smile","en":"smile","zh":"微笑","pos":"","ex":"She always has a big smile on her face.","exZh":"她臉上總是帶著燦爛的微笑。","hl":""},{"id":"其他名詞||thing","en":"thing","zh":"東西","pos":"","ex":"Please put your things away.","exZh":"請把你的東西收好。","hl":""},{"id":"其他名詞||tool","en":"tool","zh":"工具","pos":"","ex":"We need some tools to fix the bike.","exZh":"我們需要一些工具來修理腳踏車。","hl":""},{"id":"其他名詞||treat","en":"treat","zh":"招待；對待","pos":"","ex":"It's my treat today; I'll pay for lunch.","exZh":"今天我請客；我會付午餐錢。","hl":""},{"id":"其他名詞||trick","en":"trick","zh":"詭計","pos":"","ex":"The magician showed us a clever trick.","exZh":"魔術師給我們展示了一個聰明的把戲。","hl":""},{"id":"其他名詞||trouble","en":"trouble","zh":"麻煩","pos":"","ex":"I'm sorry to cause you so much trouble.","exZh":"很抱歉給你帶來這麼多麻煩。","hl":""},{"id":"其他名詞||voice","en":"voice","zh":"聲音","pos":"","ex":"She has a very sweet singing voice.","exZh":"她有非常甜美的歌聲。","hl":""},{"id":"其他名詞||way","en":"way","zh":"方法；路線","pos":"","ex":"Is there a better way to solve this problem?","exZh":"有更好的方法來解決這個問題嗎？","hl":""}]},{"id":"其他動詞","name":"其他動詞","words":[{"id":"其他動詞||stay","en":"stay","zh":"逗留","pos":"","ex":"Every time when I visit Taipei, I always stay at my aunt's house.","exZh":"每次我拜訪臺北時，總是住在阿姨家。","hl":""},{"id":"其他動詞||attack","en":"attack","zh":"攻擊","pos":"","ex":"When they were hiking in the mountains, a group of bees attacked them.","exZh":"當他們在山中健行時，一群蜜蜂攻擊了他們。","hl":""},{"id":"其他動詞||try","en":"try","zh":"嘗試","pos":"","ex":"The dress looks good on you, but it's a little too long. Why don't you try one in a smaller size?","exZh":"這件洋裝穿在你身上很好看，但有點太長。你為什麼不試試看小一點的尺寸？","hl":""},{"id":"其他動詞||share","en":"share","zh":"分享","pos":"","ex":"Johnny likes to share with his parents his school life at dinner every day.","exZh":"Johnny 喜歡每天晚餐時跟父母分享他的學校生活。","hl":""},{"id":"其他動詞||believe","en":"believe","zh":"相信","pos":"","ex":"I believe that you can pass the exam.","exZh":"我相信你能通過考試。","hl":""},{"id":"其他動詞||check","en":"check","zh":"核對","pos":"","ex":"Please check your answers before handing in the paper.","exZh":"交卷前請核對你的答案。","hl":""},{"id":"其他動詞||end","en":"end","zh":"結束","pos":"","ex":"The movie ended at 10 PM.","exZh":"電影在晚上十點結束。","hl":""},{"id":"其他動詞||finish","en":"finish","zh":"完成","pos":"","ex":"I've already finished my homework.","exZh":"我已經完成功課了。","hl":""},{"id":"其他動詞||forget","en":"forget","zh":"忘記 (p.t. forgot)","pos":"","ex":"Don't forget to lock the door.","exZh":"別忘了鎖門。","hl":""},{"id":"其他動詞||guess","en":"guess","zh":"猜想","pos":"","ex":"Can you guess what I bought for you?","exZh":"你能猜到我買了什麼給你嗎？","hl":""},{"id":"其他動詞||hate","en":"hate","zh":"恨","pos":"","ex":"I hate getting up early on cold mornings.","exZh":"我討厭在寒冷的早晨早起。","hl":""},{"id":"其他動詞||hope","en":"hope","zh":"希望","pos":"","ex":"I hope that everything will be fine.","exZh":"我希望一切都會沒事。","hl":""},{"id":"其他動詞||know","en":"know","zh":"知道 (p.t. knew)","pos":"","ex":"I knew the answer, but I didn't say it.","exZh":"我知道答案，但我沒說。","hl":""},{"id":"其他動詞||love","en":"love","zh":"愛","pos":"","ex":"We love our family very much.","exZh":"我們非常愛我們的家人。","hl":""},{"id":"其他動詞||mind","en":"mind","zh":"介意","pos":"","ex":"Would you mind opening the window?","exZh":"你介意開一下窗戶嗎？","hl":""},{"id":"其他動詞||need","en":"need","zh":"需要","pos":"","ex":"I need some help with this heavy box.","exZh":"我需要有人幫我搬這個重箱子。","hl":""},{"id":"其他動詞||notice","en":"notice","zh":"注意(到)","pos":"","ex":"I noticed that she was wearing a new dress.","exZh":"我注意到她穿了一件新洋裝。","hl":""},{"id":"其他動詞||remember","en":"remember","zh":"記得","pos":"","ex":"Please remember to bring your umbrella.","exZh":"請記得帶雨傘。","hl":""},{"id":"其他動詞||surprise","en":"surprise","zh":"使驚訝","pos":"","ex":"The news surprised everyone in the office.","exZh":"這個消息讓辦公室裡的每個人都感到驚訝。","hl":""},{"id":"其他動詞||think","en":"think","zh":"認為 (p.t. thought)","pos":"","ex":"I think that he is a very kind person.","exZh":"我認為他是一個非常親切的人。","hl":""},{"id":"其他動詞||want","en":"want","zh":"想要","pos":"","ex":"What do you want for your birthday?","exZh":"你生日想要什麼？","hl":""},{"id":"其他動詞||wish","en":"wish","zh":"希望","pos":"","ex":"I wish I could fly like a bird.","exZh":"我希望我能像鳥一樣飛。","hl":""},{"id":"其他動詞||worry","en":"worry","zh":"擔心 (p.t. worried)","pos":"","ex":"Don't worry about the results.","exZh":"別擔心結果。","hl":""},{"id":"其他動詞||act","en":"act","zh":"行動","pos":"","ex":"It's time to act; don't just talk.","exZh":"是行動的時候了；不要只是說。","hl":""},{"id":"其他動詞||bow","en":"bow","zh":"鞠躬","pos":"","ex":"They bowed to their teacher to show respect.","exZh":"他們向老師鞠躬以示尊敬。","hl":""},{"id":"其他動詞||break","en":"break","zh":"打破 (p.t. broke)","pos":"","ex":"He accidentally broke the glass.","exZh":"他不小心打破了玻璃杯。","hl":""},{"id":"其他動詞||bring","en":"bring","zh":"帶來 (p.t. brought)","pos":"","ex":"Please bring me a glass of water.","exZh":"請給我拿杯水。","hl":""},{"id":"其他動詞||brush","en":"brush","zh":"刷","pos":"","ex":"You should brush your teeth twice a day.","exZh":"你應該每天刷牙兩次。","hl":""},{"id":"其他動詞||carry","en":"carry","zh":"攜帶","pos":"","ex":"Can you help me carry these bags?","exZh":"你能幫我提這些袋子嗎？","hl":""},{"id":"其他動詞||catch","en":"catch","zh":"捉住 (p.t. caught)","pos":"","ex":"The cat caught a small mouse.","exZh":"貓抓到了一隻小老鼠。","hl":""},{"id":"其他動詞||choose","en":"choose","zh":"選擇 (p.t. chose)","pos":"","ex":"She chose a blue dress for the party.","exZh":"她為派對選了一件藍色洋裝。","hl":""},{"id":"其他動詞||clap","en":"clap","zh":"拍手","pos":"","ex":"Everyone clapped after the performance.","exZh":"表演結束後每個人都拍手。","hl":""},{"id":"其他動詞||close","en":"close","zh":"關","pos":"","ex":"Please close the door when you leave.","exZh":"離開時請關門。","hl":""},{"id":"其他動詞||collect","en":"collect","zh":"收集","pos":"","ex":"My brother likes to collect stamps.","exZh":"我哥哥喜歡集郵。","hl":""},{"id":"其他動詞||come","en":"come","zh":"來 (p.t. came)","pos":"","ex":"He came to my house yesterday.","exZh":"他昨天來我家。","hl":""},{"id":"其他動詞||correct","en":"correct","zh":"改正","pos":"","ex":"The teacher corrected my mistakes.","exZh":"老師改了我的錯誤。","hl":""},{"id":"其他動詞||copy","en":"copy","zh":"抄寫","pos":"","ex":"Don't copy your friend's homework.","exZh":"不要抄朋友的作業。","hl":""},{"id":"其他動詞||count","en":"count","zh":"數一數","pos":"","ex":"Can you count from one to ten?","exZh":"你能從一數到十嗎？","hl":""},{"id":"其他動詞||cover","en":"cover","zh":"遮蓋","pos":"","ex":"She covered the sleeping baby with a blanket.","exZh":"她給睡著的小孩蓋上毯子。","hl":""},{"id":"其他動詞||cry","en":"cry","zh":"哭","pos":"","ex":"The baby started to cry because she was hungry.","exZh":"寶寶因為餓了開始哭。","hl":""},{"id":"其他動詞||cut","en":"cut","zh":"切 (p.t. cut)","pos":"","ex":"Please cut the cake into eight pieces.","exZh":"請將蛋糕切成八塊。","hl":""},{"id":"其他動詞||dig","en":"dig","zh":"挖 (p.t. dug)","pos":"","ex":"They are digging a hole in the garden.","exZh":"他們正在花園裡挖洞。","hl":""},{"id":"其他動詞||drop","en":"drop","zh":"掉落 (p.t. dropped)","pos":"","ex":"I dropped my phone on the floor.","exZh":"我把手機掉在地板上了。","hl":""},{"id":"其他動詞||enter","en":"enter","zh":"進入","pos":"","ex":"You should knock before you enter the room.","exZh":"你進房間前應該先敲門。","hl":""},{"id":"其他動詞||feed","en":"feed","zh":"餵 (p.t. fed)","pos":"","ex":"Did you feed the dog this morning?","exZh":"你今天早上餵狗了嗎？","hl":""},{"id":"其他動詞||fight","en":"fight","zh":"打架 (p.t. fought)","pos":"","ex":"The two boys are fighting over a toy.","exZh":"那兩個男孩正在搶一個玩具。","hl":""},{"id":"其他動詞||follow","en":"follow","zh":"跟隨；遵守","pos":"","ex":"Please follow me; I'll show you the way.","exZh":"請跟我來；我會指路給你。","hl":""},{"id":"其他動詞||fry","en":"fry","zh":"煎；炸；炒","pos":"","ex":"My mom is frying some fish for dinner.","exZh":"我媽媽正在煎魚當晚餐。","hl":""},{"id":"其他動詞||go","en":"go","zh":"去 (p.t. went)","pos":"","ex":"They went to the park last weekend.","exZh":"他們上週末去了公園。","hl":""},{"id":"其他動詞||grow","en":"grow","zh":"種植；成長 (p.t. grew)","pos":"","ex":"The flowers grow quickly in the spring.","exZh":"花在春天長得很快。","hl":""},{"id":"其他動詞||hand","en":"hand","zh":"交給","pos":"","ex":"Please hand your homework to me.","exZh":"請把作業交給我。","hl":""},{"id":"其他動詞||hang","en":"hang","zh":"掛 (p.t. hung)","pos":"","ex":"He hung his coat on the wall.","exZh":"他把外套掛在牆上。","hl":""},{"id":"其他動詞||help","en":"help","zh":"幫助","pos":"","ex":"Can you help me with this problem?","exZh":"你能幫我解決這個問題嗎？","hl":""},{"id":"其他動詞||hit","en":"hit","zh":"擊中 (p.t. hit)","pos":"","ex":"He hit the ball very hard.","exZh":"他用力擊球。","hl":""},{"id":"其他動詞||hold","en":"hold","zh":"舉行；握住 (p.t. held)","pos":"","ex":"We will hold a meeting tomorrow.","exZh":"我們明天會舉行會議。","hl":""},{"id":"其他動詞||hop","en":"hop","zh":"跳躍 (p.t. hopped)","pos":"","ex":"The rabbit hopped away quickly.","exZh":"兔子快速地跳走了。","hl":""},{"id":"其他動詞||hurry","en":"hurry","zh":"趕快","pos":"","ex":"Hurry up, or we will be late for school.","exZh":"快點，否則我們上學會遲到。","hl":""},{"id":"其他動詞||jump","en":"jump","zh":"跳","pos":"","ex":"The cat jumped onto the table.","exZh":"貓跳到了桌子上。","hl":""},{"id":"其他動詞||kick","en":"kick","zh":"踢","pos":"","ex":"He kicked the soccer ball into the goal.","exZh":"他把足球踢進了球門。","hl":""},{"id":"其他動詞||knock","en":"knock","zh":"敲","pos":"","ex":"Someone is knocking at the door.","exZh":"有人在敲門。","hl":""},{"id":"其他動詞||kill","en":"kill","zh":"殺害","pos":"","ex":"The hunter killed the dangerous animal.","exZh":"獵人殺死了那隻危險的動物。","hl":""},{"id":"其他動詞||kiss","en":"kiss","zh":"吻","pos":"","ex":"She kissed her son on the cheek.","exZh":"她親了兒子的臉頰。","hl":""},{"id":"其他動詞||laugh","en":"laugh","zh":"嘲笑","pos":"","ex":"They laughed at his funny joke.","exZh":"他們嘲笑他那滑稽的笑話。","hl":""},{"id":"其他動詞||leave","en":"leave","zh":"離開 (p.t. left)","pos":"","ex":"He left the office at 6 PM.","exZh":"他在下午六點離開辦公室。","hl":""},{"id":"其他動詞||list","en":"list","zh":"列出","pos":"","ex":"Please list all the things you need.","exZh":"請列出所有你需要的東西。","hl":""},{"id":"其他動詞||make","en":"make","zh":"製造 (p.t. made)","pos":"","ex":"She made a beautiful cake for me.","exZh":"她為我做了一個漂亮的蛋糕。","hl":""},{"id":"其他動詞||meet","en":"meet","zh":"遇見 (p.t. met)","pos":"","ex":"I met an old friend on the street.","exZh":"我在街上遇見一位老朋友。","hl":""},{"id":"其他動詞||miss","en":"miss","zh":"錯過；想念","pos":"","ex":"I missed the bus this morning.","exZh":"我今天早上錯過了公車。","hl":""},{"id":"其他動詞||move","en":"move","zh":"移動","pos":"","ex":"We decided to move to a new house.","exZh":"我們決定搬到新家。","hl":""},{"id":"其他動詞||nod","en":"nod","zh":"點頭 (p.t. nodded)","pos":"","ex":"He nodded his head to show agreement.","exZh":"他點頭表示同意。","hl":""},{"id":"其他動詞||open","en":"open","zh":"打開","pos":"","ex":"Please open your books to page 10.","exZh":"請翻開書到第 10 頁。","hl":""},{"id":"其他動詞||pack","en":"pack","zh":"整理行李","pos":"","ex":"I haven't packed my suitcase yet.","exZh":"我還沒整理我的行李箱。","hl":""},{"id":"其他動詞||paste","en":"paste","zh":"黏貼","pos":"","ex":"Paste the photo on the paper.","exZh":"把照片貼在紙上。","hl":""},{"id":"其他動詞||pick","en":"pick","zh":"挑選","pos":"","ex":"You can pick any color you like.","exZh":"你可以挑選任何你喜歡的顏色。","hl":""},{"id":"其他動詞||agree","en":"agree","zh":"同意","pos":"","ex":"I agree with your idea.","exZh":"我同意你的想法。","hl":""},{"id":"其他動詞||appear","en":"appear","zh":"出現","pos":"","ex":"A rainbow appeared in the sky.","exZh":"天空中出現了一道彩虹。","hl":""},{"id":"其他動詞||become","en":"become","zh":"變成 (p.t. became)","pos":"","ex":"He became a doctor after years of study.","exZh":"經過多年的學習後，他成為了一名醫生。","hl":""},{"id":"其他動詞||begin","en":"begin","zh":"開始 (p.t. began)","pos":"","ex":"The class begins at 8 AM.","exZh":"課程在早上八點開始。","hl":""},{"id":"其他動詞||belong","en":"belong","zh":"屬於","pos":"","ex":"This book belongs to me.","exZh":"這本書是屬於我的。","hl":""},{"id":"其他動詞||call","en":"call","zh":"打電話","pos":"","ex":"I'll call you later.","exZh":"我待會兒會打電話給你。","hl":""},{"id":"其他動詞||care","en":"care","zh":"關心","pos":"","ex":"She cares a lot about her students.","exZh":"她非常關心她的學生。","hl":""},{"id":"其他動詞||change","en":"change","zh":"改變","pos":"","ex":"The weather changed suddenly.","exZh":"天氣突然變了。","hl":""},{"id":"其他動詞||date","en":"date","zh":"約會","pos":"","ex":"They have been dating for two years.","exZh":"他們已經約會兩年了。","hl":""},{"id":"其他動詞||deal","en":"deal","zh":"買賣；處理 (p.t. dealt)","pos":"","ex":"He knows how to deal with problems.","exZh":"他知道如何處理問題。","hl":""},{"id":"其他動詞||decide","en":"decide","zh":"決定","pos":"","ex":"We decided to go to Taipei this weekend.","exZh":"我們決定這週末去臺北。","hl":""},{"id":"其他動詞||die","en":"die","zh":"死","pos":"","ex":"The plant died because of no water.","exZh":"植物因為沒水枯死了。","hl":""},{"id":"其他動詞||enjoy","en":"enjoy","zh":"享受","pos":"","ex":"I enjoy listening to music.","exZh":"我享受聽音樂。","hl":""},{"id":"其他動詞||fall","en":"fall","zh":"跌下 (p.t. fell)","pos":"","ex":"The leaves fall from the trees in autumn.","exZh":"秋天時樹葉從樹上落下。","hl":""},{"id":"其他動詞||fill","en":"fill","zh":"裝滿","pos":"","ex":"Please fill the glass with water.","exZh":"請把玻璃杯裝滿水。","hl":""},{"id":"其他動詞||find","en":"find","zh":"找到 (p.t. found)","pos":"","ex":"I finally found my lost keys.","exZh":"我終於找到了遺失的鑰匙。","hl":""},{"id":"其他動詞||get","en":"get","zh":"獲得 (p.t. got)","pos":"","ex":"I got a high score on the test.","exZh":"我在考試中得了高分。","hl":""},{"id":"其他動詞||give","en":"give","zh":"給 (p.t. gave)","pos":"","ex":"He gave me a present for my birthday.","exZh":"他送我一份生日禮物。","hl":""},{"id":"其他動詞||happen","en":"happen","zh":"發生","pos":"","ex":"Something strange happened last night.","exZh":"昨晚發生了一些奇怪的事。","hl":""},{"id":"其他動詞||hide","en":"hide","zh":"躲藏 (p.t. hid)","pos":"","ex":"The cat is hiding under the bed.","exZh":"貓正躲在床底下。","hl":""},{"id":"其他動詞||hurt","en":"hurt","zh":"傷害 (p.t. hurt)","pos":"","ex":"My leg hurts a lot.","exZh":"我的腿很痛。","hl":""},{"id":"其他動詞||invite","en":"invite","zh":"邀請","pos":"","ex":"They invited us to their party.","exZh":"他們邀請我們去他們的派對。","hl":""},{"id":"其他動詞||join","en":"join","zh":"加入","pos":"","ex":"Would you like to join our club?","exZh":"你想加入我們的社團嗎？","hl":""},{"id":"其他動詞||keep","en":"keep","zh":"保持 (p.t. kept)","pos":"","ex":"Please keep the room clean.","exZh":"請保持房間乾淨。","hl":""},{"id":"其他動詞||lead","en":"lead","zh":"引導 (p.t. led)","pos":"","ex":"This road leads to the station.","exZh":"這條路通往車站。","hl":""},{"id":"其他動詞||let","en":"let","zh":"讓 (p.t. let)","pos":"","ex":"Let me help you with the bag.","exZh":"讓我幫你提袋子。","hl":""},{"id":"其他動詞||lie","en":"lie","zh":"說謊；躺 (p.t. lay)","pos":"","ex":"He lay on the grass and looked at the sky.","exZh":"他躺在草地上看著天空。","hl":""},{"id":"其他動詞||mean","en":"mean","zh":"意指 (p.t. meant)","pos":"","ex":"What does this word mean?","exZh":"這個字是什麼意思？","hl":""},{"id":"其他動詞||plan","en":"plan","zh":"計畫 (p.t. planned)","pos":"","ex":"We are planning a trip to Hualien.","exZh":"我們正計畫去花蓮旅行。","hl":""},{"id":"其他動詞||please","en":"please","zh":"取悅","pos":"","ex":"It's hard to please everyone.","exZh":"很難取悅每個人。","hl":""},{"id":"其他動詞||pray","en":"pray","zh":"祈禱","pos":"","ex":"She prayed for her family's health.","exZh":"她為家人的健康祈禱。","hl":""},{"id":"其他動詞||send","en":"send","zh":"寄送 (p.t. sent)","pos":"","ex":"I'll send you an email later.","exZh":"我待會兒會寄電子郵件給你。","hl":""},{"id":"其他動詞||save","en":"save","zh":"節省；拯救","pos":"","ex":"We should save water and electricity.","exZh":"我們應該節省水電。","hl":""},{"id":"其他動詞||sell","en":"sell","zh":"賣 (p.t. sold)","pos":"","ex":"They sell fresh vegetables at the market.","exZh":"他們在市場賣新鮮蔬菜。","hl":""},{"id":"其他動詞||show","en":"show","zh":"展示","pos":"","ex":"Can you show me your new watch?","exZh":"你能給我看你的新手錶嗎？","hl":""},{"id":"其他動詞||sit","en":"sit","zh":"坐 (p.t. sat)","pos":"","ex":"He is sitting on the chair.","exZh":"他正坐在椅子上。","hl":""},{"id":"其他動詞||sleep","en":"sleep","zh":"睡覺 (p.t. slept)","pos":"","ex":"The baby is sleeping soundly.","exZh":"寶寶正安穩地睡著。","hl":""},{"id":"其他動詞||start","en":"start","zh":"開始","pos":"","ex":"Let's start the meeting now.","exZh":"我們現在開始會議吧。","hl":""},{"id":"其他動詞||stop","en":"stop","zh":"停止 (p.t. stopped)","pos":"","ex":"Please stop making noise.","exZh":"請停止製造噪音。","hl":""},{"id":"其他動詞||thank","en":"thank","zh":"謝謝","pos":"","ex":"I want to thank you for your help.","exZh":"我想謝謝你的幫助。","hl":""},{"id":"其他動詞||wait","en":"wait","zh":"等待","pos":"","ex":"I am waiting for the bus.","exZh":"我正在等公車。","hl":""},{"id":"其他動詞||wake","en":"wake","zh":"叫醒 (p.t. woke)","pos":"","ex":"Please wake me up at 7 AM.","exZh":"請在早上七點叫醒我。","hl":""},{"id":"其他動詞||welcome","en":"welcome","zh":"歡迎","pos":"","ex":"Welcome to Taiwan!","exZh":"歡迎來到臺灣！","hl":""},{"id":"其他動詞||visit","en":"visit","zh":"參觀；拜訪","pos":"","ex":"They visited the museum yesterday.","exZh":"他們昨天參觀了博物館。","hl":""},{"id":"其他動詞||easy to deal with","en":"easy to deal with","zh":"容易相處/處理","pos":"精析：常用語","ex":"He's easy to deal with.","exZh":"","hl":""},{"id":"其他動詞||it's a deal.","en":"It's a deal.","zh":"一言為定。","pos":"精析：常用語","ex":"It's a deal. See you then.","exZh":"","hl":""}]},{"id":"其他形容詞","name":"其他形容詞","words":[{"id":"其他形容詞||able","en":"able","zh":"有能力的","pos":"","ex":"He is able to speak three languages.","exZh":"他能說三種語言。","hl":""},{"id":"其他形容詞||afraid","en":"afraid","zh":"害怕的","pos":"","ex":"Many children are afraid of the dark.","exZh":"許多小孩怕黑。","hl":""},{"id":"其他形容詞||bright","en":"bright","zh":"光明的","pos":"","ex":"The sun is very bright today.","exZh":"今天的陽光很燦爛。","hl":""},{"id":"其他形容詞||clean","en":"clean","zh":"乾淨的","pos":"","ex":"Please keep your hands clean.","exZh":"請保持雙手乾淨。","hl":""},{"id":"其他形容詞||common","en":"common","zh":"常見的","pos":"","ex":"This is a common mistake in English.","exZh":"這是英文中常見的錯誤。","hl":""},{"id":"其他形容詞||convenient","en":"convenient","zh":"便利的","pos":"","ex":"Living near the MRT is very convenient.","exZh":"住在捷運站附近非常便利。","hl":""},{"id":"其他形容詞||correct","en":"correct","zh":"正確的","pos":"","ex":"Is this the correct answer?","exZh":"這是正確答案嗎？","hl":""},{"id":"其他形容詞||crazy","en":"crazy","zh":"瘋狂的","pos":"","ex":"You are crazy to go out in this storm.","exZh":"你在暴風雨中出門真是瘋了。","hl":""},{"id":"其他形容詞||dangerous","en":"dangerous","zh":"危險的","pos":"","ex":"It is dangerous to play with fire.","exZh":"玩火是很危險的。","hl":""},{"id":"其他形容詞||dark","en":"dark","zh":"黑暗的","pos":"","ex":"It's getting dark outside.","exZh":"外面天快黑了。","hl":""},{"id":"其他形容詞||dead","en":"dead","zh":"死亡的","pos":"","ex":"The old tree is dead.","exZh":"那棵老樹已經枯死了。","hl":""},{"id":"其他形容詞||dear","en":"dear","zh":"親愛的","pos":"","ex":"Dear Mom, I love you.","exZh":"親愛的媽媽，我愛您。","hl":""},{"id":"其他形容詞||different","en":"different","zh":"不同的","pos":"","ex":"These two books are very different.","exZh":"這兩本書非常不同。","hl":""},{"id":"其他形容詞||difficult","en":"difficult","zh":"困難的","pos":"","ex":"This math problem is quite difficult.","exZh":"這題數學相當困難。","hl":""},{"id":"其他形容詞||dirty","en":"dirty","zh":"髒的","pos":"","ex":"The room looks dirty. Please clean it.","exZh":"這房間看起來很髒。請打掃一下。","hl":""},{"id":"其他形容詞||easy","en":"easy","zh":"簡單的","pos":"","ex":"The test was very easy.","exZh":"這次測驗非常簡單。","hl":""},{"id":"其他形容詞||else","en":"else","zh":"其他的","pos":"","ex":"What else do you want to buy?","exZh":"你還想要買其他的什麼嗎？","hl":""},{"id":"其他形容詞||enough","en":"enough","zh":"足夠的","pos":"","ex":"We have enough food for everyone.","exZh":"我們有足夠每個人吃的食物。","hl":""},{"id":"其他形容詞||excellent","en":"excellent","zh":"傑出的","pos":"","ex":"He did an excellent job on the project.","exZh":"他在這個專案上做得非常出色。","hl":""},{"id":"其他形容詞||favorite","en":"favorite","zh":"最愛的","pos":"","ex":"Blue is my favorite color.","exZh":"藍色是我最喜歡的顏色。","hl":""},{"id":"其他形容詞||fine","en":"fine","zh":"安好的","pos":"","ex":"I am fine, thank you.","exZh":"我很好，謝謝。","hl":""},{"id":"其他形容詞||foreign","en":"foreign","zh":"外國的","pos":"","ex":"She likes to learn foreign languages.","exZh":"她喜歡學習外國語言。","hl":""},{"id":"其他形容詞||free","en":"free","zh":"空閒的；免費的","pos":"","ex":"Are you free this weekend?","exZh":"你這週末有空嗎？","hl":""},{"id":"其他形容詞||glad","en":"glad","zh":"高興的","pos":"","ex":"I am glad to see you again.","exZh":"我很高興再次見到你。","hl":""},{"id":"其他形容詞||great","en":"great","zh":"很棒的","pos":"","ex":"That's a great idea!","exZh":"那是個很棒的主意！","hl":""},{"id":"其他形容詞||hard","en":"hard","zh":"困難的；硬的","pos":"","ex":"This is a hard problem to solve.","exZh":"這是一個很難解決的問題。","hl":""},{"id":"其他形容詞||helpful","en":"helpful","zh":"有幫助的","pos":"","ex":"The teacher was very helpful to us.","exZh":"老師對我們非常有幫助。","hl":""},{"id":"其他形容詞||important","en":"important","zh":"重要的","pos":"","ex":"It is important to eat breakfast.","exZh":"吃早餐很重要。","hl":""},{"id":"其他形容詞||interesting","en":"interesting","zh":"有趣的","pos":"","ex":"The movie was very interesting.","exZh":"這部電影很有趣。","hl":""},{"id":"其他形容詞||loud","en":"loud","zh":"大聲的","pos":"","ex":"He spoke in a loud voice.","exZh":"他用大聲的嗓音說話。","hl":""},{"id":"其他形容詞||lucky","en":"lucky","zh":"幸運的","pos":"","ex":"You are so lucky to win the prize.","exZh":"你能贏得獎品真是太幸運了。","hl":""},{"id":"其他形容詞||magic","en":"magic","zh":"神奇的","pos":"","ex":"The magician has a magic hat.","exZh":"魔術師有一頂神奇的帽子。","hl":""},{"id":"其他形容詞||modern","en":"modern","zh":"現代的","pos":"","ex":"Taipei is a very modern city.","exZh":"臺北是一個非常現代化的城市。","hl":""},{"id":"其他形容詞||new","en":"new","zh":"新的","pos":"","ex":"I bought a new pair of shoes.","exZh":"我買了一雙新鞋。","hl":""},{"id":"其他形容詞||only","en":"only","zh":"唯一的","pos":"","ex":"She is the only child in her family.","exZh":"她是家裡唯一的孩子。","hl":""},{"id":"其他形容詞||own","en":"own","zh":"自己的","pos":"","ex":"I have my own room now.","exZh":"我現在有我自己的房間了。","hl":""},{"id":"其他形容詞||popular","en":"popular","zh":"流行的","pos":"","ex":"This singer is very popular in Taiwan.","exZh":"這位歌手在臺灣很受歡迎。","hl":""},{"id":"其他形容詞||possible","en":"possible","zh":"可能的","pos":"","ex":"It's possible that it will rain today.","exZh":"今天有可能會下雨。","hl":""},{"id":"其他形容詞||present","en":"present","zh":"出席的；禮物","pos":"","ex":"There were 20 students present today.","exZh":"今天有 20 名學生出席。","hl":""},{"id":"其他形容詞||public","en":"public","zh":"公共的","pos":"","ex":"You should not smoke in public places.","exZh":"你不應該在公共場所抽菸。","hl":""},{"id":"其他形容詞||quiet","en":"quiet","zh":"安靜的","pos":"","ex":"Please be quiet in the library.","exZh":"在圖書館請保持安靜。","hl":""},{"id":"其他形容詞||ready","en":"ready","zh":"準備好的","pos":"","ex":"Are you ready to go?","exZh":"你準備好要出發了嗎？","hl":""},{"id":"其他形容詞||real","en":"real","zh":"真實的","pos":"","ex":"Is this a real diamond?","exZh":"這是真的鑽石嗎？","hl":""},{"id":"其他形容詞||right","en":"right","zh":"對的；右邊的","pos":"","ex":"You are right about that.","exZh":"關於那點你是對的。","hl":""},{"id":"其他形容詞||safe","en":"safe","zh":"安全的","pos":"","ex":"It is safe to swim in this pool.","exZh":"在這個泳池游泳很安全。","hl":""},{"id":"其他形容詞||same","en":"same","zh":"相同的","pos":"","ex":"We go to the same school.","exZh":"我們上同一所學校。","hl":""},{"id":"其他形容詞||scared","en":"scared","zh":"害怕的","pos":"","ex":"She is scared of spiders.","exZh":"她怕蜘蛛。","hl":""},{"id":"其他形容詞||serious","en":"serious","zh":"嚴重的；認真的","pos":"","ex":"This is a serious problem.","exZh":"這是一個嚴重的問題。","hl":""},{"id":"其他形容詞||sharp","en":"sharp","zh":"鋒利的","pos":"","ex":"This knife is very sharp.","exZh":"這把刀很鋒利。","hl":""},{"id":"其他形容詞||simple","en":"simple","zh":"簡易的","pos":"","ex":"The rules of the game are simple.","exZh":"遊戲規則很簡單。","hl":""},{"id":"其他形容詞||sorry","en":"sorry","zh":"抱歉的","pos":"","ex":"I'm sorry for being late.","exZh":"很抱歉我遲到了。","hl":""},{"id":"其他形容詞||special","en":"special","zh":"特別的","pos":"","ex":"Today is a special day for us.","exZh":"今天對我們來說是一個特別的日子。","hl":""},{"id":"其他形容詞||strange","en":"strange","zh":"奇怪的","pos":"","ex":"I heard a strange noise last night.","exZh":"我昨晚聽到一個奇怪的聲音。","hl":""},{"id":"其他形容詞||sure","en":"sure","zh":"確定的","pos":"","ex":"Are you sure about the time?","exZh":"你確定時間嗎？","hl":""},{"id":"其他形容詞||surprised","en":"surprised","zh":"感到驚訝的","pos":"","ex":"She was surprised to see him there.","exZh":"她在那裡見到他感到很驚訝。","hl":""},{"id":"其他形容詞||terrible","en":"terrible","zh":"可怕的","pos":"","ex":"The weather was terrible yesterday.","exZh":"昨天天氣非常糟糕（可怕）。","hl":""},{"id":"其他形容詞||thick","en":"thick","zh":"厚的","pos":"","ex":"The walls of the house are very thick.","exZh":"這房子的牆壁非常厚。","hl":""},{"id":"其他形容詞||tidy","en":"tidy","zh":"整潔的","pos":"","ex":"Her desk is always very tidy.","exZh":"她的書桌總是非常整潔。","hl":""},{"id":"其他形容詞||true","en":"true","zh":"真的","pos":"","ex":"The story he told us is true.","exZh":"他告訴我們的故事是真的。","hl":""},{"id":"其他形容詞||useful","en":"useful","zh":"有用的","pos":"","ex":"This is a very useful book.","exZh":"這是一本非常有用的書。","hl":""},{"id":"其他形容詞||wonderful","en":"wonderful","zh":"美好的","pos":"","ex":"We had a wonderful time at the party.","exZh":"我們在派對上玩得很開心（美好的時光）。","hl":""},{"id":"其他形容詞||wrong","en":"wrong","zh":"錯誤的","pos":"","ex":"I think you have the wrong number.","exZh":"我想你撥錯號碼了。","hl":""}]},{"id":"其他副詞","name":"其他副詞","words":[{"id":"其他副詞||again","en":"again","zh":"再一次","pos":"","ex":"Can you say that again, please?","exZh":"請你可以再說一次嗎？","hl":""},{"id":"其他副詞||also","en":"also","zh":"也","pos":"","ex":"She is a teacher and also a writer.","exZh":"她是一位老師，也是一位作家。","hl":""},{"id":"其他副詞||almost","en":"almost","zh":"幾乎","pos":"","ex":"I'm almost finished with my work.","exZh":"我幾乎快完成我的工作了。","hl":""},{"id":"其他副詞||abroad","en":"abroad","zh":"在外國","pos":"","ex":"Many students want to go abroad.","exZh":"許多學生想要出國。","hl":""},{"id":"其他副詞||ahead","en":"ahead","zh":"在前頭","pos":"","ex":"There is a gas station ahead.","exZh":"前方有一家加油站。","hl":""},{"id":"其他副詞||aloud","en":"aloud","zh":"大聲地","pos":"","ex":"Please read the story aloud.","exZh":"請大聲讀出這個故事。","hl":""},{"id":"其他副詞||already","en":"already","zh":"早已；已經","pos":"","ex":"I have already seen this movie.","exZh":"我已經看過這部電影了。","hl":""},{"id":"其他副詞||around","en":"around","zh":"到處；周圍","pos":"","ex":"He traveled around the world.","exZh":"他週遊世界。","hl":""},{"id":"其他副詞||away","en":"away","zh":"在遠處；離開","pos":"","ex":"The birds flew away.","exZh":"鳥兒飛走了。","hl":""},{"id":"其他副詞||either","en":"either","zh":"也不","pos":"","ex":"If you don't go, I won't go either.","exZh":"如果你不去，我也不去。","hl":""},{"id":"其他副詞||finally","en":"finally","zh":"最後","pos":"","ex":"They finally arrived at the top.","exZh":"他們最後終於到達了頂端。","hl":""},{"id":"其他副詞||inside","en":"inside","zh":"在室內","pos":"","ex":"Let's go inside; it's raining.","exZh":"我們進去室內吧；正在下雨。","hl":""},{"id":"其他副詞||just","en":"just","zh":"正好","pos":"","ex":"I just saw him a minute ago.","exZh":"我剛才（正好）看到他。","hl":""},{"id":"其他副詞||later","en":"later","zh":"待會兒","pos":"","ex":"I'll call you back later.","exZh":"我待會兒再回電給你。","hl":""},{"id":"其他副詞||least","en":"least","zh":"最少","pos":"","ex":"He has the least money among us.","exZh":"他是我們之中錢最少的。","hl":""},{"id":"其他副詞||maybe","en":"maybe","zh":"也許","pos":"","ex":"Maybe it will rain tomorrow.","exZh":"也許明天會下雨。","hl":""},{"id":"其他副詞||only","en":"only","zh":"只有；唯一","pos":"","ex":"I only have five dollars.","exZh":"我只有五塊錢。","hl":""},{"id":"其他副詞||perhaps","en":"perhaps","zh":"或許","pos":"","ex":"Perhaps we can go together.","exZh":"或許我們可以一起去。","hl":""},{"id":"其他副詞||really","en":"really","zh":"真正地","pos":"","ex":"I really like this song.","exZh":"我真的喜歡這首歌。","hl":""},{"id":"其他副詞||somewhere","en":"somewhere","zh":"在某處","pos":"","ex":"I left my keys somewhere.","exZh":"我把鑰匙留在某處了。","hl":""},{"id":"其他副詞||still","en":"still","zh":"仍然","pos":"","ex":"He is still working in the office.","exZh":"他仍然在辦公室工作。","hl":""},{"id":"其他副詞||then","en":"then","zh":"然後","pos":"","ex":"We ate dinner and then watched TV.","exZh":"我們吃過晚餐，然後看了電視。","hl":""},{"id":"其他副詞||together","en":"together","zh":"一起","pos":"","ex":"Let's go to the park together.","exZh":"我們一起去公園吧。","hl":""},{"id":"其他副詞||quite","en":"quite","zh":"十分；相當","pos":"","ex":"The movie was quite interesting.","exZh":"這部電影挺（相當）有趣的。","hl":""},{"id":"其他副詞||well","en":"well","zh":"很好","pos":"","ex":"He plays the piano very well.","exZh":"他鋼琴彈得很好。","hl":""},{"id":"其他副詞||yet","en":"yet","zh":"尚未","pos":"","ex":"I haven't finished my homework yet.","exZh":"我尚未完成我的功課。","hl":""}]}]};
+
+/* ---------- storage (per phone, per browser) ---------- */
+const mem={};
+let storeOK=true;
+const store={
+  get:function(k,d){
+    try{const v=localStorage.getItem(k); if(v!==null) return JSON.parse(v);}catch(e){storeOK=false;}
+    return (k in mem)?mem[k]:d;
+  },
+  set:function(k,v){
+    mem[k]=v;
+    try{localStorage.setItem(k,JSON.stringify(v));return true;}catch(e){storeOK=false;return false;}
+  }
+};
+const imported=store.get('wd.book',null);
+let usingImported=!!(imported&&imported.cats&&imported.cats.length);
+let book=usingImported?imported:BUILTIN;
+let known=store.get('wd.known',{})||{};
+let pos=store.get('wd.pos',{})||{};
+const settings=Object.assign({dir:'en2zh',autoWord:true,autoEx:true,rate:'normal',accent:'en-US'},store.get('wd.settings',{}));
+function saveSettings(){store.set('wd.settings',settings);}
+function saveKnown(){store.set('wd.known',known);}
+function savePosAll(){store.set('wd.pos',pos);}
+
+/* ---------- tiny DOM helpers ---------- */
+const $=function(s){return document.querySelector(s);};
+function h(tag,props){
+  const el=document.createElement(tag);
+  if(props){
+    Object.keys(props).forEach(function(k){
+      const v=props[k];
+      if(k==='class') el.className=v;
+      else if(k==='text') el.textContent=v;
+      else if(k.slice(0,2)==='on') el.addEventListener(k.slice(2),v);
+      else if(v===true) el.setAttribute(k,'');
+      else if(v!==false&&v!=null) el.setAttribute(k,v);
+    });
+  }
+  for(let i=2;i<arguments.length;i++){
+    const kids=[].concat(arguments[i]);
+    kids.forEach(function(c){
+      if(c==null||c===false) return;
+      el.append(c.nodeType?c:document.createTextNode(String(c)));
+    });
+  }
+  return el;
+}
+const ICON={
+  speaker:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4z"/><path d="M15.5 9a4 4 0 010 6M18 6.5a7.5 7.5 0 010 11"/></svg>',
+  sliders:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>',
+  upload:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>',
+  chev:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
+  check:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  dots:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.8" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.8" fill="currentColor" stroke="none"/></svg>'
+};
+function ico(n){const t=document.createElement('template');t.innerHTML=ICON[n];return t.content.firstChild;}
+
+let toastT;
+function toast(msg){
+  const t=$('#toast');t.textContent=msg;t.hidden=false;
+  clearTimeout(toastT);toastT=setTimeout(function(){t.hidden=true;},1700);
+}
+
+/* ---------- speech ---------- */
+const synth=('speechSynthesis' in window)?window.speechSynthesis:null;
+const RATES={slow:0.7,normal:0.9,fast:1.05};
+let voices=[];
+function loadVoices(){if(!synth) return;try{voices=synth.getVoices()||[];}catch(e){voices=[];}}
+if(synth){
+  loadVoices();
+  if(synth.addEventListener) synth.addEventListener('voiceschanged',loadVoices);
+  else synth.onvoiceschanged=loadVoices;
+}
+function pickVoice(lang){
+  const l=lang.toLowerCase();
+  const c=voices.filter(function(v){return v.lang&&v.lang.replace('_','-').toLowerCase()===l;});
+  if(!c.length) return null;
+  const score=function(v){return (/premium|enhanced|natural|neural/i.test(v.name)?3:0)+(/samantha|daniel|google/i.test(v.name)?1:0)+(v.localService?0.5:0);};
+  return c.sort(function(a,b){return score(b)-score(a);})[0];
+}
+function speakable(t){return String(t).replace(/\s*[\/=]\s*/g,', ');}
+function say(list){
+  if(!synth) return;
+  try{if(synth.speaking||synth.pending) synth.cancel();}catch(e){}
+  list.filter(Boolean).forEach(function(t){
+    const u=new SpeechSynthesisUtterance(speakable(t));
+    u.lang=settings.accent;
+    const v=pickVoice(settings.accent);
+    if(v) u.voice=v;
+    u.rate=RATES[settings.rate]||0.9;
+    synth.speak(u);
+  });
+}
+function speakBtn(label,fn){
+  return h('button',{class:'speak',type:'button',onclick:function(ev){ev.stopPropagation();fn();}},ico('speaker'),label);
+}
+
+/* ---------- sheet ---------- */
+let lastFocus=null;
+function openSheet(build){
+  const sh=$('#sheet');
+  lastFocus=document.activeElement;
+  sh.replaceChildren();build(sh);
+  $('#sheetBack').hidden=false;sh.scrollTop=0;sh.focus();
+}
+function closeSheet(){
+  $('#sheetBack').hidden=true;
+  if(lastFocus&&lastFocus.focus){try{lastFocus.focus();}catch(e){}}
+}
+function closeBtn(label){return h('button',{class:'btn',type:'button',onclick:closeSheet,text:label||'完成'});}
+function twoStep(label,confirmLabel,action){
+  let armed=false,timer;
+  const b=h('button',{class:'btn btn-danger',type:'button',text:label,onclick:function(){
+    if(!armed){armed=true;b.textContent=confirmLabel;timer=setTimeout(function(){armed=false;b.textContent=label;},4000);}
+    else{clearTimeout(timer);action();}
+  }});
+  return b;
+}
+
+/* ---------- home ---------- */
+function countKnown(words){return words.filter(function(w){return known[w.id];}).length;}
+function renderHome(){
+  const list=$('#catList');list.replaceChildren();
+  const rows=book.cats.map(function(c){return {id:c.id,name:c.name,total:c.words.length,k:countKnown(c.words)};});
+  if(book.cats.length>1){
+    const total=rows.reduce(function(n,r){return n+r.total;},0);
+    const k=rows.reduce(function(n,r){return n+r.k;},0);
+    rows.unshift({id:ALL,name:'全部單字',total:total,k:k});
+  }
+  rows.forEach(function(r){
+    const p=pos[r.id]||0;
+    const done=r.total>0&&r.k>=r.total;
+    const meta=done?'全部已熟悉':(r.k+' / '+r.total+' 已熟悉'+(p>0?' · 上次看到第 '+(p+1)+' 個':''));
+    const fill=h('i');fill.style.width=(r.total?Math.round(r.k/r.total*100):0)+'%';
+    list.append(h('li',null,
+      h('div',{class:'cat'+(done?' is-done':'')},
+        h('button',{class:'cat-main',type:'button',onclick:function(){startStudy(r.id);}},
+          h('span',{class:'cat-name',text:r.name}),
+          h('span',{class:'cat-meta',text:meta}),
+          h('span',{class:'meter','aria-hidden':'true'},fill)),
+        h('button',{class:'icon-btn cat-more',type:'button','aria-label':r.name+' 的更多選項',onclick:function(){openCatSheet(r);}},ico('dots')))));
+  });
+  $('#emptyNote').hidden=book.cats.length>0;
+  const n=book.cats.reduce(function(s,c){return s+c.words.length;},0);
+  $('#homeFoot').textContent='單字庫共 '+book.cats.length+' 個分類、'+n+' 個單字。進度只存在這支手機的瀏覽器裡'+(storeOK?'。':'，而這個瀏覽器目前無法保存，關閉頁面後會消失。');
+}
+function goHome(){
+  if(synth){try{synth.cancel();}catch(e){}}
+  S=null;$('#home').hidden=false;$('#study').hidden=true;renderHome();
+}
+function openCatSheet(r){
+  openSheet(function(s){
+    const ids=flatWords(book,r.id).map(function(e){return e.w.id;});
+    s.append(h('h2',{class:'sheet-title',text:r.name}));
+    s.append(h('p',{class:'muted',text:'共 '+r.total+' 個單字，已熟悉 '+r.k+' 個。直接點分類會從上次看到的地方繼續。'}));
+    s.append(h('button',{class:'btn btn-primary',type:'button',text:'從頭開始（略過已熟悉）',onclick:function(){closeSheet();startStudy(r.id,{fresh:true});}}));
+    s.append(h('button',{class:'btn',type:'button',text:'全部複習（含已熟悉）',onclick:function(){closeSheet();startStudy(r.id,{fresh:true,includeKnown:true});}}));
+    s.append(twoStep('清除這個分類的熟悉紀錄','再按一次，確定清除',function(){
+      ids.forEach(function(id){delete known[id];});saveKnown();pos[r.id]=0;savePosAll();
+      closeSheet();renderHome();toast('已清除，這些單字會重新出現');
+    }));
+    s.append(closeBtn());
+  });
+}
+
+/* ---------- study ---------- */
+let S=null;
+function cur(){return S.queue[S.i].w;}
+function startStudy(catId,opts){
+  opts=opts||{};
+  const includeKnown=!!opts.includeKnown;
+  let start=opts.fresh?0:(pos[catId]||0);
+  let q=buildQueue(book,catId,known,start,includeKnown);
+  if(!q.length&&start>0){start=0;q=buildQueue(book,catId,known,0,includeKnown);}
+  S={catId:catId,queue:q,i:0,revealed:false,done:false,allKnown:false,seen:0,newKnown:0,includeKnown:includeKnown};
+  if(!q.length){S.done=true;S.allKnown=true;}
+  $('#home').hidden=true;$('#study').hidden=false;
+  showCard(true);
+}
+function savePos(){if(S&&!S.done){pos[S.catId]=S.queue[S.i].ix;savePosAll();}}
+function showCard(speakFront){
+  S.revealed=false;
+  $('#cardWrap').scrollTop=0;
+  if(!S.done) savePos();
+  renderStudy();
+  if(speakFront&&!S.done) autoFront();
+}
+function autoFront(){
+  if(settings.dir==='en2zh'&&settings.autoWord) say([cur().en]);
+  else if(synth&&synth.speaking){try{synth.cancel();}catch(e){}}
+}
+function reveal(){
+  if(!S||S.done||S.revealed) return;
+  S.revealed=true;renderStudy();
+  const w=cur(),list=[];
+  if(settings.dir==='zh2en'&&settings.autoWord) list.push(w.en);
+  if(settings.autoEx&&w.ex) list.push(w.ex);
+  if(list.length) say(list);
+}
+function next(){
+  if(!S||S.done) return;
+  S.seen=Math.max(S.seen,S.i+1);
+  if(S.i<S.queue.length-1){S.i++;showCard(true);}
+  else{S.done=true;pos[S.catId]=0;savePosAll();showCard(false);}
+}
+function prev(){
+  if(!S||S.done||S.i===0) return;
+  S.i--;showCard(true);
+}
+function markKnownNext(){
+  const w=cur();
+  if(!known[w.id]){known[w.id]=1;S.newKnown++;saveKnown();}
+  toast('已記下，下次會跳過這個單字');
+  next();
+}
+function unmarkKnown(){
+  delete known[cur().id];saveKnown();
+  toast('已取消，之後會再出現');
+  renderStudy();
+}
+function updateBar(){
+  $('#stCat').textContent=S.catId===ALL?'全部單字':S.catId;
+  if(S.done){$('#stCount').textContent='完成';$('#progFill').style.width='100%';}
+  else{$('#stCount').textContent=(S.i+1)+' / '+S.queue.length;$('#progFill').style.width=Math.round(S.i/S.queue.length*100)+'%';}
+}
+function wordEl(text){return h('div',{class:'word',lang:'en'},h('span',{class:'hl',text:text}));}
+function sentenceWithMark(sentence,word,hl){
+  const frag=document.createDocumentFragment();
+  const lower=sentence.toLowerCase();
+  const cands=[];
+  if(hl) cands.push({t:hl,exact:true});
+  String(word).split(/\s*[\/=()]\s*/).map(function(s){return s.trim();}).filter(Boolean)
+    .sort(function(a,b){return b.length-a.length;}).forEach(function(t){cands.push({t:t,exact:false});});
+  let idx=-1,end=-1;
+  for(let k=0;k<cands.length&&idx<0;k++){
+    const w=cands[k].t.toLowerCase();
+    let from=0;
+    while(true){
+      const i=lower.indexOf(w,from);
+      if(i<0) break;
+      const b=lower.charAt(i-1);
+      if(!b||!/[a-z]/.test(b)){
+        idx=i;end=i+w.length;
+        if(!cands[k].exact){let extra=0;while(end<sentence.length&&/[a-z]/i.test(sentence.charAt(end))&&extra<4){end++;extra++;}}
+        break;
+      }
+      from=i+1;
+    }
+  }
+  if(idx<0){frag.append(document.createTextNode(sentence));return frag;}
+  if(idx>0) frag.append(document.createTextNode(sentence.slice(0,idx)));
+  frag.append(h('mark',{text:sentence.slice(idx,end)}));
+  if(end<sentence.length) frag.append(document.createTextNode(sentence.slice(end)));
+  return frag;
+}
+function exampleBlock(w){
+  const sent=h('p',{class:'ex-en',lang:'en'});
+  sent.append(sentenceWithMark(w.ex,w.en,w.hl));
+  const text=h('div',{class:'ex-text'},sent,w.exZh?h('p',{class:'ex-zh',lang:'zh-Hant',text:w.exZh}):null);
+  const play=synth?h('button',{class:'icon-btn ring',type:'button','aria-label':'播放例句',onclick:function(ev){ev.stopPropagation();say([w.ex]);}},ico('speaker')):null;
+  return h('div',{class:'example'},h('span',{class:'ex-label',text:'例句'}),h('div',{class:'ex-row'},text,play));
+}
+function renderStudy(){
+  const card=$('#card');card.replaceChildren();
+  updateBar();
+  if(S.done){renderDone(card);renderActions();return;}
+  const e=S.queue[S.i],w=e.w,en2zh=settings.dir==='en2zh';
+  const top=h('div',{class:'card-top'});
+  if(S.catId===ALL) top.append(h('span',{class:'chip',text:e.cat}));
+  if(w.pos) top.append(h('span',{class:'chip',text:w.pos}));
+  if(known[w.id]) top.append(h('span',{class:'chip chip-go'},ico('check'),'已熟悉'));
+  const body=h('div',{class:'card-body'});
+  if(en2zh){
+    body.append(wordEl(w.en));
+    if(synth) body.append(speakBtn('發音',function(){say([w.en]);}));
+  }else{
+    body.append(h('div',{class:'zh-big',lang:'zh-Hant',text:w.zh}));
+  }
+  if(!S.revealed){
+    body.append(h('p',{class:'hint',text:en2zh?'點一下卡片，顯示中文':'點一下卡片，顯示英文'}));
+  }else{
+    const ans=h('div',{class:'answer'});
+    if(en2zh){
+      ans.append(h('div',{class:'zh-mid',lang:'zh-Hant',text:w.zh}));
+    }else{
+      ans.append(wordEl(w.en));
+      if(synth) ans.append(speakBtn('發音',function(){say([w.en]);}));
+    }
+    if(w.ex) ans.append(exampleBlock(w));
+    body.append(ans);
+  }
+  card.append(top,body);
+  renderActions();
+}
+function renderDone(card){
+  const all=S.allKnown;
+  card.append(h('div',{class:'card-top'}));
+  card.append(h('div',{class:'card-body done'},
+    h('div',{class:'word'},h('span',{class:'hl',text:all?'都熟了':'這一輪完成'})),
+    h('p',{class:'done-text',text:all?'這個分類的單字都已標記為熟悉。':'本輪看了 '+S.seen+' 個單字，新增 '+S.newKnown+' 個熟悉。'}),
+    h('div',{class:'done-btns'},
+      h('button',{class:'btn btn-primary',type:'button',text:all?'全部再複習一次':'再來一輪',onclick:function(){startStudy(S.catId,{fresh:true,includeKnown:all});}}),
+      h('button',{class:'btn',type:'button',text:'回到分類',onclick:goHome}))));
+}
+function renderActions(){
+  const a=$('#actions');a.replaceChildren();
+  if(S.done){a.hidden=true;return;}
+  a.hidden=false;
+  const en2zh=settings.dir==='en2zh';
+  const prevBtn=h('button',{class:'btn btn-prev',type:'button','aria-label':'上一個',disabled:S.i===0,onclick:prev},ico('chev'));
+  if(!S.revealed){
+    a.append(prevBtn,h('button',{class:'btn btn-primary',type:'button',text:en2zh?'顯示中文':'顯示英文',onclick:reveal}));
+    return;
+  }
+  if(known[cur().id]){
+    a.append(prevBtn,
+      h('button',{class:'btn',type:'button',text:'取消熟悉',onclick:unmarkKnown}),
+      h('button',{class:'btn btn-primary',type:'button',text:'下一個',onclick:next}));
+  }else{
+    a.append(prevBtn,
+      h('button',{class:'btn',type:'button',text:'還不熟，下一個',onclick:next}),
+      h('button',{class:'btn btn-go',type:'button',text:'已熟悉，下次跳過',onclick:markKnownNext}));
+  }
+}
+
+/* ---------- settings ---------- */
+function group(label){
+  const g=h('div',{class:'group'},h('span',{class:'group-label',text:label}));
+  for(let i=1;i<arguments.length;i++) if(arguments[i]) g.append(arguments[i]);
+  return g;
+}
+function seg(key,opts){
+  const wrap=h('div',{class:'seg',role:'group'});
+  const btns=opts.map(function(o){
+    return h('button',{type:'button','aria-pressed':String(settings[key]===o[0]),text:o[1],onclick:function(){
+      settings[key]=o[0];saveSettings();
+      btns.forEach(function(b,i){b.setAttribute('aria-pressed',String(opts[i][0]===o[0]));});
+      if(key==='dir'&&S&&!S.done){S.revealed=false;renderStudy();}
+    }});
+  });
+  btns.forEach(function(b){wrap.append(b);});
+  return wrap;
+}
+function switchRow(key,label,id){
+  const input=h('input',{id:id,type:'checkbox',class:'switch',role:'switch',onchange:function(){settings[key]=input.checked;saveSettings();}});
+  input.checked=!!settings[key];
+  return h('label',{class:'row',for:id},h('span',{text:label}),input);
+}
+function openSettings(){
+  openSheet(function(s){
+    const n=book.cats.reduce(function(t,c){return t+c.words.length;},0);
+    s.append(h('h2',{class:'sheet-title',text:'設定'}));
+    s.append(group('顯示方向',seg('dir',[['en2zh','英文 → 中文'],['zh2en','中文 → 英文']])));
+    s.append(group('朗讀',
+      switchRow('autoWord','自動朗讀單字','swWord'),
+      switchRow('autoEx','自動朗讀例句','swEx')));
+    s.append(group('語速',seg('rate',[['slow','慢'],['normal','正常'],['fast','快']])));
+    s.append(group('口音',seg('accent',[['en-US','美式'],['en-GB','英式']])));
+    if(synth) s.append(h('button',{class:'btn',type:'button',text:'試聽發音',onclick:function(){say(['Hello! This is how the words will sound.']);}}));
+    else s.append(h('p',{class:'muted',text:'這個瀏覽器不支援朗讀功能。'}));
+    s.append(group('單字庫',
+      h('p',{class:'muted',text:'目前有 '+book.cats.length+' 個分類、'+n+' 個單字'+(usingImported?'（你匯入的 Excel）':'（內建）')+'。'}),
+      h('button',{class:'btn btn-primary',type:'button',text:'匯入新的 Excel',onclick:openImport}),
+      usingImported?h('button',{class:'btn',type:'button',text:'改回內建單字庫',onclick:restoreBuiltin}):null,
+      twoStep('清除全部熟悉紀錄','再按一次，確定清除',function(){
+        known={};saveKnown();pos={};savePosAll();closeSheet();goHome();toast('已清除全部熟悉紀錄');
+      })));
+    s.append(closeBtn());
+  });
+}
+
+/* ---------- import ---------- */
+let pending=null,errMsg='';
+function readAs(file,mode){
+  return new Promise(function(resolve,reject){
+    const fr=new FileReader();
+    fr.onload=function(){resolve(fr.result);};
+    fr.onerror=function(){reject(fr.error||new Error('read'));};
+    if(mode==='text') fr.readAsText(file,'utf-8'); else fr.readAsArrayBuffer(file);
+  });
+}
+async function readSheets(file){
+  if(typeof XLSX==='undefined') throw new Error('xlsx-missing');
+  let wb;
+  if(/\.csv$/i.test(file.name||'')){
+    const text=String(await readAs(file,'text')).replace(/^﻿/,'');
+    wb=XLSX.read(text,{type:'string'});
+  }else{
+    wb=XLSX.read(await readAs(file,'buffer'),{type:'array'});
+  }
+  return wb.SheetNames.map(function(n){
+    return {name:n,rows:XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:'',blankrows:false,raw:false})};
+  });
+}
+function sampleTable(){
+  const head=['英文','中文','詞性','例句','例句中文'];
+  const row=['luggage','行李','n.','Please keep an eye on your luggage.','請留意你的行李。'];
+  return h('div',{class:'tbl-wrap'},h('table',null,
+    h('thead',null,h('tr',null,head.map(function(t){return h('th',{text:t});}))),
+    h('tbody',null,h('tr',null,row.map(function(t){return h('td',{text:t});})))));
+}
+async function onFile(file,s){
+  if(!file) return;
+  try{
+    const res=buildBook(await readSheets(file));
+    if(!res.cats.length){pending=null;errMsg='沒有讀到單字。請確認第一列有「英文」和「中文」兩個標題，下面每列放一個單字。';}
+    else{pending={cats:res.cats,skipped:res.skipped,dups:res.dupSheets,name:file.name};errMsg='';}
+  }catch(e){
+    pending=null;
+    errMsg=(e&&e.message==='xlsx-missing')?'讀取 Excel 的元件沒有載入。請確認網路連線，重新整理頁面後再試。':'這個檔案讀不了。請確認是 .xlsx 或 .csv 檔。';
+  }
+  buildImport(s);
+}
+function restoreBuiltin(){
+  store.set('wd.book',null);usingImported=false;book=BUILTIN;S=null;
+  closeSheet();$('#home').hidden=false;$('#study').hidden=true;renderHome();toast('已改回內建單字庫');
+}
+function applyImport(){
+  book={cats:pending.cats,importedAt:Date.now()};usingImported=true;
+  const ok=store.set('wd.book',book);
+  const n=pending.cats.reduce(function(t,c){return t+c.words.length;},0);
+  pending=null;S=null;
+  closeSheet();
+  $('#home').hidden=false;$('#study').hidden=true;renderHome();
+  toast(ok?'已匯入 '+n+' 個單字':'已匯入，但這個瀏覽器無法保存，關閉頁面後需重新匯入');
+}
+function buildImport(s){
+  s.replaceChildren();
+  s.append(h('h2',{class:'sheet-title',text:'匯入單字庫'}));
+  if(!pending){
+    s.append(h('p',{class:'muted',text:'選擇 Excel 檔。每個工作表會成為一個分類，工作表名稱就是分類名稱。第一列放標題，詞性、例句、例句中文可以省略。'}));
+    s.append(sampleTable());
+    s.append(h('p',{class:'muted',text:'想在同一個工作表裡分出多個分類，可以多加一欄「分類」。重新匯入時，已熟悉的紀錄會保留。'}));
+    s.append(h('label',{class:'btn btn-primary file-btn',for:'fileIn',text:'選擇 Excel 檔'}));
+    const inp=h('input',{id:'fileIn',type:'file',accept:'.xlsx,.xls,.csv',class:'vh'});
+    inp.addEventListener('change',function(){onFile(inp.files&&inp.files[0],s);});
+    s.append(inp);
+    if(errMsg) s.append(h('p',{class:'err',role:'alert',text:errMsg}));
+    s.append(closeBtn('取消'));
+  }else{
+    const n=pending.cats.reduce(function(t,c){return t+c.words.length;},0);
+    s.append(h('p',{class:'muted',text:'「'+pending.name+'」讀到 '+pending.cats.length+' 個分類、'+n+' 個單字。'}));
+    s.append(h('ul',{class:'sum'},pending.cats.map(function(c){return h('li',null,h('span',{text:c.name}),h('span',{text:c.words.length+' 個'}));})));
+    if(pending.dups&&pending.dups.length) s.append(h('p',{class:'muted',text:'有 '+pending.dups.length+' 個內容重複的工作表已略過。'}));
+    if(pending.skipped) s.append(h('p',{class:'muted',text:'有 '+pending.skipped+' 列無法當成單字卡，已略過。'}));
+    s.append(h('button',{class:'btn btn-primary',type:'button',text:'使用這份單字庫',onclick:applyImport}));
+    s.append(h('button',{class:'btn',type:'button',text:'重新選擇檔案',onclick:function(){pending=null;errMsg='';buildImport(s);}}));
+  }
+}
+function openImport(){pending=null;errMsg='';openSheet(buildImport);}
+
+/* ---------- wiring ---------- */
+['#btnImport','#btnImport2'].forEach(function(id){const el=$(id);if(el) el.addEventListener('click',openImport);});
+['#btnSettings','#btnSettings2'].forEach(function(id){$(id).addEventListener('click',openSettings);});
+$('#btnImport').append(ico('upload'));
+$('#btnSettings').append(ico('sliders'));
+$('#btnSettings2').append(ico('sliders'));
+$('#btnBack').append(ico('chev'));
+$('#btnBack').addEventListener('click',goHome);
+$('#cardWrap').addEventListener('click',function(){if(S&&$('#sheetBack').hidden) reveal();});
+$('#sheetBack').addEventListener('click',function(e){if(e.target.id==='sheetBack') closeSheet();});
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'&&!$('#sheetBack').hidden){closeSheet();return;}
+  if(!S||$('#study').hidden||!$('#sheetBack').hidden) return;
+  if(e.target&&e.target.closest&&e.target.closest('button,input,label,a,select,textarea')) return;
+  if(e.key===' '||e.key==='Enter'){e.preventDefault();if(!S.revealed) reveal(); else next();}
+  else if(e.key==='ArrowRight'){if(S.revealed) next(); else reveal();}
+  else if(e.key==='ArrowLeft'){prev();}
+  else if((e.key==='k'||e.key==='K')&&S.revealed&&!S.done&&!known[cur().id]){markKnownNext();}
+  else if((e.key==='p'||e.key==='P')&&!S.done){say([cur().en]);}
+});
+renderHome();
+})();
+</script>
+</body>
+</html>
